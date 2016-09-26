@@ -9,16 +9,14 @@ from datetime import datetime
 
 import six
 
-'''
-彩色的LOGGER
-'''
-
 try:
     import curses
 
     assert curses
 except ImportError:
     curses = None
+
+__all__ = [add_console_logger, add_qyWechat_logger]
 
 _DEFAULT_LOG_FORMAT = '%(asctime)s %(levelname)s %(filename)s [line:%(lineno)d] === %(message)s'
 
@@ -75,6 +73,27 @@ class _LogFormatter(logging.Formatter):
         return formatted.replace("\n", "\n    ")
 
 
+def add_console_logger(logger, level='info'):
+    """
+    增加console作为日志输入.
+    """
+    logger.setLevel(getattr(logging, level.upper()))
+
+    if not logger.handlers:
+        # Set up color if we are in a tty and curses is installed
+        color = False
+        if curses and sys.stderr.isatty():
+            try:
+                curses.setupterm()
+                if curses.tigetnum("colors") > 0:
+                    color = True
+            except:
+                pass
+        console = logging.StreamHandler()
+        console.setFormatter(_LogFormatter(color=color))
+        logger.addHandler(console)
+
+
 '''
 企业微信号，LOG HANDLER
 '''
@@ -88,6 +107,7 @@ class qyWeChatLoggerHandler(logging.Handler):
         self._user_ids = target.get('user_ids', '@all')
         self._tag_ids = target.get('tag_ids', '')
         self._party_ids = target.get('party_ids', '')
+
         super(qyWeChatLoggerHandler, self).__init__()
         return
 
@@ -114,27 +134,6 @@ class qyWeChatLoggerHandler(logging.Handler):
             'url': '',
             'image': ''
         }]
-
-
-def add_console_logger(logger, level='info'):
-    """
-    增加console作为日志输入.
-    """
-    logger.setLevel(getattr(logging, level.upper()))
-
-    if not logger.handlers:
-        # Set up color if we are in a tty and curses is installed
-        color = False
-        if curses and sys.stderr.isatty():
-            try:
-                curses.setupterm()
-                if curses.tigetnum("colors") > 0:
-                    color = True
-            except:
-                pass
-        console = logging.StreamHandler()
-        console.setFormatter(_LogFormatter(color=color))
-        logger.addHandler(console)
 
 
 def add_qyWechat_logger(logger, level, corpid, appsecret, agentid, target={}):
