@@ -1,0 +1,13 @@
+wrapt
+six
+requests
+bottle
+wechatpy
+numpy
+pandas
+pytesseract
+mysql-connector
+sqlalchemy
+PyCrypto
+demjson
+Pillow
