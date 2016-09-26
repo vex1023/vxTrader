@@ -6,7 +6,7 @@
 
 ### 安装方法
 
-```bash
+```
 pip3 install vxTrader
 ```
 
