@@ -26,18 +26,18 @@ class TraderFactory():
 
     _instance = {}
 
-    def __init__(self, brokerid):
+    def __init__(self, brokerID):
         # 使用小写作为关键字
-        self._brokerid = brokerid.lower()
+        self._brokerID = brokerID.lower()
 
     def __call__(self, cls):
-        TraderFactory._instance[self._brokerid] = cls
+        TraderFactory._instance[self._brokerID] = cls
         return cls
 
     @classmethod
-    def create(cls, brokerid, account, password, **kwargs):
-        brokerid = brokerid.lower()
-        instance = cls._instance.get(brokerid, None)
+    def create(cls, brokerID, account, password, **kwargs):
+        brokerID = brokerID.lower()
+        instance = cls._instance.get(brokerID, None)
         if instance:
             return instance(account, password, **kwargs)
 
