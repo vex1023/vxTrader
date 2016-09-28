@@ -2,3 +2,4 @@
 '''
 broker基础类
 '''
+from .gfTrader import gfTrader

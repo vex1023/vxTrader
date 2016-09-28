@@ -1,14 +1,15 @@
 # encoding = utf-8
 
-from vxTrader.PrettyLogger import add_console_logger
-from .broker import *
 
 __name__ = 'vxTrader'
 __version__ = '0.0.1'
 __author__ = 'vex1023'
 __email__ = 'vex1023@qq.com'
 
-__all__ = [logger, TraderFactory]
+__all__ = ['logger', 'TraderFactory']
+
+import logging
+from vxTrader.PrettyLogger import add_console_logger
 
 logger = logging.getLogger(__name__)
 add_console_logger(logger)
@@ -34,8 +35,12 @@ class TraderFactory():
         return cls
 
     @classmethod
-    def create(self, brokerid, account, password, **kwargs):
+    def create(cls, brokerid, account, password, **kwargs):
         brokerid = brokerid.lower()
-        instance = TraderFactory._instance.get(brokerid, None)
+        instance = cls._instance.get(brokerid, None)
         if instance:
             return instance(account, password, **kwargs)
+
+
+# 自动加载相应的broker
+from vxTrader.broker import *

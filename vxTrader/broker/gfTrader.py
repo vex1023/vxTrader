@@ -12,7 +12,7 @@ import time
 import requests
 import pytesseract
 import pandas as pd
-from vxTrader import logger
+from vxTrader import logger, TraderFactory
 from vxTrader.broker.WebTrader import LoginSession, WebTrader, SessionPool
 from vxTrader.TraderException import VerifyCodeError, TraderAPIError
 from vxTrader.util import code_to_symbols, retry
@@ -199,8 +199,8 @@ class gfLoginSession(LoginSession):
         return self._exchange_stock_account
 
 
+@TraderFactory('gf')
 class gfTrader(WebTrader):
-    BrokerID = 'gf'
 
     def __init__(self, account, password, **kwargs):
         super(gfTrader, self).__init__(account=account, password=password, **kwargs)
