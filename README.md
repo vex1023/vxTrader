@@ -26,8 +26,7 @@ print(trader.orderlist)
 ```
 
 ### 支持券商
-|券商名称 | broker id |
-|:    ---    |:    ---    :|
-| 国金证券（佣金宝) | yjg |
-|广发证券 | gf |
-|雪球组合管理 | xq |
+
+* Broker ID : __'gf'   广发证券__  
+* Broker ID : __'yjb'  国金证券（佣金宝）__
+* Broker ID : __'xq'   雪球组合管理__
