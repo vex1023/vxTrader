@@ -8,6 +8,6 @@ pandas
 pytesseract
 mysql-connector
 sqlalchemy
-PyCrypto
+cryptography
 demjson
 Pillow
