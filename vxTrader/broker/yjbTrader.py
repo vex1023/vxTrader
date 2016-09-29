@@ -266,57 +266,52 @@ class yjbTrader(WebTrader):
 
         return p
 
-    def buy(self, symbol, price=0, amount=0, volume=0):
-        symbol = symbol.lower()
-        exchange_type = '1' if symbol[:2] == 'sh' else '2'
-
-        params = {
-            "service_type": "stock",
-            'entrust_bs': 1,  # 1:买入 ; 2:卖出
-            'entrust_amount': amount if amount else volume // price // 100 * 100,
-            'elig_riskmatch_flag': 1,
-            'stock_code': symbol[2:],
-            'stock_account': self.exchange_stock_account[exchange_type],
-            'exchange_type': exchange_type
-        }
-
-        if price is None or price == 0:
-            params['entrust_prop'] = 'R'
-            params['entrust_price'] = 1
-            params['request_id'] = 'buystockbymarketvalue_302'
-        else:
-            params['entrust_prop'] = 0
-            params['entrust_price'] = price
-            params['request_id'] = 'buystock_302'
-
-        df = self._trade_api(**params)
-        logger.info(df)
-        return df['order_no'].iloc[0]
-
-    def sell(self, symbol, price=0, amount=0, volume=0):
+    def buy(self, symbol, price, amount=0, volume=0):
 
         symbol = symbol.lower()
         # 上海：1 ； 深圳：2
         exchange_type = '1' if symbol[:2] == 'sh' else '2'
 
+        if amount == 0:
+            amount = volume // price // 100 * 100
+
         params = {
             "service_type": "stock",
-            'entrust_bs': 2,  # 1:买入 ; 2:卖出
-            'entrust_amount': amount if amount else volume // price // 100 * 100,
+            'entrust_bs': 1,  # 1:买入 ; 2:卖出
+            'entrust_amount': amount,
             'elig_riskmatch_flag': 1,
             'stock_code': symbol[2:],
             'stock_account': self.exchange_stock_account[exchange_type],
-            'exchange_type': exchange_type
+            'exchange_type': exchange_type,
+            'entrust_prop': 0,
+            'entrust_price': price,
+            'request_id': 'buystock_302'
         }
 
-        if price is None:
-            params['entrust_prop'] = 'R'
-            params['entrust_price'] = 1
-            params['request_id'] = 'sellstockbymarketvalue_302'
-        else:
-            params['entrust_prop'] = 0
-            params['entrust_price'] = price
-            params['request_id'] = 'sellstock_302'
+        df = self._trade_api(**params)
+        return df['order_no'].iloc[0]
+
+    def sell(self, symbol, price, amount=0, volume=0):
+
+        symbol = symbol.lower()
+        # 上海：1 ； 深圳：2
+        exchange_type = '1' if symbol[:2] == 'sh' else '2'
+
+        if amount == 0:
+            amount = volume // price // 100 * 100
+
+        params = {
+            "service_type": "stock",
+            'entrust_bs': 2,  # 1:买入 ; 2:卖出
+            'entrust_amount': amount,
+            'elig_riskmatch_flag': 1,
+            'stock_code': symbol[2:],
+            'stock_account': self.exchange_stock_account[exchange_type],
+            'exchange_type': exchange_type,
+            'entrust_prop': 0,
+            'entrust_price': price,
+            'request_id': 'sellstock_302'
+        }
 
         df = self._trade_api(**params)
         return df['order_no'].iloc[0]
@@ -422,34 +417,3 @@ class yjbTrader(WebTrader):
         )
 
         return df
-
-
-'''
-
-https://jy.yongjinbao.com.cn/winner_gj/gjzq/stock/exchange.action?CSRF_Token=undefined
-&timestamp=0.2082792952574708
-&request_id=zhuanzhang2_500
-&bank_no=7
-&transfer_direction=1
-&money_type=0
-&bank_password=0d3e0eaf68a669c8cd1807315e7320e2a9c6d65f2d2dd26813d2b0c74ded6e7a9313c31291b4eb75ad7eccbffee7a8972c6b0556aefa6e1dcff2e52de19a22eede115ee4340f1983e9bc195a56a89390b5585ae575dcd929f6f89eca42fb47f299d184d05d43a78e2bd310a74ebab3cdfd1109dd9615204050f668f78af02b9c
-&fund_password=
-&loginPasswordType=RSA
-&occur_balance=1
-&random_number=
-
-
-https://jy.yongjinbao.com.cn/winner_gj/gjzq/stock/exchange.action?
-    CSRF_Token=undefined
-    &timestamp=0.52258349749832
-    &request_id=zhuanzhang2_500
-    &bank_no=7
-    &transfer_direction=2
-    &money_type=0
-    &bank_password=
-    &fund_password=0d3e0eaf68a669c8cd1807315e7320e2a9c6d65f2d2dd26813d2b0c74ded6e7a9313c31291b4eb75ad7eccbffee7a8972c6b0556aefa6e1dcff2e52de19a22eede115ee4340f1983e9bc195a56a89390b5585ae575dcd929f6f89eca42fb47f299d184d05d43a78e2bd310a74ebab3cdfd1109dd9615204050f668f78af02b9c
-    &loginPasswordType=RSA
-    &occur_balance=1
-    &random_number=
-
-'''
