@@ -19,6 +19,7 @@ class gfTraderTestCase(unittest.TestCase):
         print(self.trader.portfolio)
         print(self.trader.orderlist)
         print(self.trader.exchange_stock_account)
+        print(self.trader.order('sz150023', 100))
 
 
 if __name__ == '__main__':
