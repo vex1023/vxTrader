@@ -18,6 +18,7 @@ class gfTraderTestCase(unittest.TestCase):
     def test_gfLoginSession(self):
         print(self.trader.portfolio)
         print(self.trader.orderlist)
+        print(self.trader.exchange_stock_account)
 
 
 if __name__ == '__main__':
