@@ -56,7 +56,7 @@ class gfLoginSession(LoginSession):
         # 交易用的sessionId
         self._dse_sessionId = None
 
-    def basic_session(self):
+    def pre_login(self):
         '''
         初始化session，以及需要的headers
         :return:
@@ -78,7 +78,8 @@ class gfLoginSession(LoginSession):
         logger.debug('get trade home pages sucess.')
 
         self._expire_at = 0
-        return session
+        self._session = session
+        return
 
     @property
     @retry(10, VerifyCodeError)
@@ -120,7 +121,7 @@ class gfLoginSession(LoginSession):
     def login(self):
 
         # 无论是否登录，都重新创建一个session对象
-        self._session = self.basic_session()
+        self.pre_login()
 
         login_params = {
             "authtype": 2,
@@ -172,6 +173,13 @@ class gfLoginSession(LoginSession):
 
         return resq
 
+
+@TraderFactory('gf')
+class gfTrader(WebTrader):
+    def __init__(self, account, password, **kwargs):
+        super(gfTrader, self).__init__(account=account, password=password, **kwargs)
+        self.client = SessionPool.get('gf', account=account, password=password)
+
     @property
     def exchange_stock_account(self):
 
@@ -184,7 +192,7 @@ class gfLoginSession(LoginSession):
         }
 
         url = 'https://trade.gf.com.cn/entry'
-        resq = self.session.get(url, params=account_params)
+        resq = self.client.get(url, params=account_params)
         resq.raise_for_status()
 
         jslist = resq.text.split(';')
@@ -198,13 +206,6 @@ class gfLoginSession(LoginSession):
 
         return self._exchange_stock_account
 
-
-@TraderFactory('gf')
-class gfTrader(WebTrader):
-
-    def __init__(self, account, password, **kwargs):
-        super(gfTrader, self).__init__(account=account, password=password, **kwargs)
-        self.client = SessionPool.get('gf', account=account, password=password)
 
     @property
     def portfolio(self):
@@ -326,7 +327,7 @@ class gfTrader(WebTrader):
             classname='com.gf.etrade.control.StockUF2Control',
             method='entrust',
             entrust_bs=1,
-            stock_account=self.client.exchange_stock_account[exchange_type],
+            stock_account=self.exchange_stock_account[exchange_type],
             exchange_type=exchange_type,
             stock_code=symbol[2:],
             entrust_price=price
@@ -358,7 +359,7 @@ class gfTrader(WebTrader):
             classname='com.gf.etrade.control.StockUF2Control',
             method='entrust',
             entrust_bs=1,
-            stock_account=self.client.exchange_stock_account[exchange_type],
+            stock_account=self.exchange_stock_account[exchange_type],
             exchange_type=exchange_type,
             stock_code=symbol[2:],
             entrust_price=price

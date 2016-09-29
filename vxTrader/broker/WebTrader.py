@@ -24,13 +24,11 @@ _SINA_STOCK_KEYS = [
 
 _HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko',
-    'Host': 'xueqiu.com',
     'Pragma': 'no-cache',
     'Connection': 'keep-alive',
     'Accept': '*/*',
     'Accept-Encoding': 'gzip,deflate,sdch',
     'Cache-Conrol': 'no-cache',
-    'Referer': 'http://xueqiu.com/P/ZH003694',
     'X-Requested-With': 'XMLHttpRequest',
     'Accept-Language': 'zh-CN,zh;q=0.8'
 }
@@ -102,9 +100,9 @@ class LoginSession():
         # 初始化线程锁
         self.lock = multiprocessing.Lock()
 
-    def basic_session(self):
+    def pre_login(self):
         # 默认创建一个requests.session对象
-        return requests.session()
+        self._session = requests.session()
 
     @property
     def session(self):
@@ -123,13 +121,6 @@ class LoginSession():
         登录接口
         '''
         raise NotImplementedError('Login method is not implemented.')
-
-    @property
-    def exchange_stock_account(self):
-        '''
-        交易所交易账号
-        '''
-        raise NotImplementedError('login_info method is not implemented.')
 
     def request(self, method, url, **kwargs):
         '''
@@ -154,6 +145,7 @@ class WebTrader():
         self._account = account
         self._password = password
 
+        self._exchange_stock_account = None
         # 初始化线程池
         pool_size = kwargs.pop('pool_size', 5)
         self._worker = Pool(pool_size)
@@ -173,6 +165,13 @@ class WebTrader():
             logger.info('Reflash the expire time, expire_at timestamp is: %s' % self.expire_at)
 
         return
+
+    @property
+    def exchange_stock_account(self):
+        '''
+        交易所交易账号
+        '''
+        raise NotImplementedError('login_info method is not implemented.')
 
     @property
     def portfolio(self):
