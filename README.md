@@ -6,6 +6,16 @@
 
 ### 安装方法
 
+1、安装tesseract-ocr，进行校验码的自动识别；
+```
+sudo apt-get install tesseract-ocr
+sudo apt-get install python3-image
+```
+2、安装依赖库
+```
+pip3 install -r requirement.txt
+```
+3、安装vxTrader
 ```
 pip3 install vxTrader
 ```
