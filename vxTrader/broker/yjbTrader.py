@@ -20,18 +20,10 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
 from vxTrader.broker.WebTrader import LoginSession, WebTrader, SessionPool
-from vxTrader.TraderException import VerifyCodeError, TraderAPIError, LoginFailedError, TraderNetworkError, logger
+from vxTrader.TraderException import VerifyCodeError, TraderAPIError, LoginFailedError, TraderNetworkError
 
-from vxTrader.util import code_to_symbols, retry
-from vxTrader import TraderFactory
-
-
-class Ssl3HttpAdapter(HTTPAdapter):
-    def init_poolmanager(self, connections, maxsize, block=False):
-        self.poolmanager = PoolManager(num_pools=connections,
-                                       maxsize=maxsize,
-                                       block=block,
-                                       ssl_version=ssl.PROTOCOL_TLSv1)
+from vxTrader.util import code_to_symbols, retry, to_time
+from vxTrader import TraderFactory, logger
 
 
 TIMEOUT = 600
@@ -55,17 +47,21 @@ RENAME_DICT = {
 }
 
 
-def to_time(yjb_time):
-    yjb_time = '{:0>6}'.format(yjb_time)
-    return '%s:%s:%s' % (yjb_time[:2], yjb_time[2:4], yjb_time[4:6])
+class Ssl3HttpAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False):
+        self.poolmanager = PoolManager(num_pools=connections,
+                                       maxsize=maxsize,
+                                       block=block,
+                                       ssl_version=ssl.PROTOCOL_TLSv1)
+
 
 
 @SessionPool.register('yjb')
 class yjbLoginSession(LoginSession):
-    def __init__(self):
+    def __init__(self, account, password):
 
         # 初始化父类
-        super(gfLoginSession, self).__init__(account=account, password=password)
+        super(yjbLoginSession, self).__init__(account=account, password=password)
 
         # 初始化登录参数
         self.mac_address = ("".join(c + "-" if i % 2 else c for i, c in \
@@ -116,6 +112,8 @@ class yjbLoginSession(LoginSession):
 
     def login(self):
 
+        self.pre_login()
+
         login_params = {
             "function_id": 200,
             "login_type": "stock",
@@ -135,7 +133,7 @@ class yjbLoginSession(LoginSession):
         }
         logger.debug('login_params is: %s' % login_params)
 
-        r = self.client.post(
+        r = self._session.post(
             'https://jy.yongjinbao.com.cn/winner_gj/gjzq/exchange.action',
             params=login_params)
         r.raise_for_status()
@@ -172,10 +170,10 @@ class yjbLoginSession(LoginSession):
             kwargs.pop('params', {})
         )
 
-        r = self._session.request(
+        r = self.session.request(
             method=method,
             url=url,
-            params=token_params,
+            params=params,
             **kwargs
         )
         r.raise_for_status()
@@ -192,19 +190,20 @@ class yjbTrader(WebTrader):
         self.bank_password = bank_password
         self.fund_password = fund_password
         self._exchange_stock_account = None
+        self.client = yjbLoginSession(account=account, password=password)
 
     def _trade_api(self, **kwargs):
         '''
         底层交易接口
         '''
 
-        logger.debug('call params: %s' % params)
+        logger.debug('call params: %s' % kwargs)
         r = self.client.get(url='https://jy.yongjinbao.com.cn/winner_gj/gjzq/stock/exchange.action',
-                            params=params)
-        logger.debug('return: %s' % resq.text)
+                            params=kwargs)
+        logger.debug('return: %s' % r.text)
 
         # 解析返回的结果数据
-        returnJson = resq.json()['returnJson']
+        returnJson = r.json()['returnJson']
         if returnJson is None:
             return None
 

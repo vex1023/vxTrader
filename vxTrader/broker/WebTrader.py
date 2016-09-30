@@ -126,10 +126,10 @@ class LoginSession():
         '''
         调用session的各类http方法
         '''
-        logger.info('Call params: %s' % kwargs)
+        logger.debug('Call params: %s' % kwargs)
         resq = self.session.request(method=method, url=url, **kwargs)
         resq.raise_for_status()
-        logger.info('return: %s' % resq.text)
+        logger.debug('return: %s' % resq.text)
         self._expire_at = time.time() + _TIMEOUT
         return resq
 
@@ -150,7 +150,6 @@ class WebTrader():
         pool_size = kwargs.pop('pool_size', 5)
         self._worker = Pool(pool_size)
 
-        self.lock = multiprocessing.Lock()
 
     def keepalive(self, now=0):
         '''
@@ -197,8 +196,8 @@ class WebTrader():
 
         url = 'http://hq.sinajs.cn/?rn=%d&list=' % int(time.time())
 
-        urls = [url + ','.join(symbols[i:i + MAX_LIST]) \
-                for i in range(0, len(symbols), MAX_LIST)]
+        urls = [url + ','.join(symbols[i:i + _MAX_LIST]) \
+                for i in range(0, len(symbols), _MAX_LIST)]
 
         respones = self._worker.imap(requests.get, urls)
         data = list()
@@ -207,13 +206,13 @@ class WebTrader():
             for line in lines:
                 d = line.split('"')[1].split(',')
                 # 如果格式不正确,则返回nan
-                if len(d) != len(SINA_STOCK_KEYS):
-                    d = [np.nan] * len(SINA_STOCK_KEYS)
+                if len(d) != len(_SINA_STOCK_KEYS):
+                    d = [np.nan] * len(_SINA_STOCK_KEYS)
                 data.append(d)
-        df = pd.DataFrame(data, index=symbols, columns=SINA_STOCK_KEYS, dtype='float')
+        df = pd.DataFrame(data, index=symbols, columns=_SINA_STOCK_KEYS, dtype='float')
         df.index.name = 'symbol'
         df.sort_index()
-        if 'volume' in SINA_STOCK_KEYS and 'lasttrade' in SINA_STOCK_KEYS and 'yclose' in SINA_STOCK_KEYS:
+        if 'volume' in _SINA_STOCK_KEYS and 'lasttrade' in _SINA_STOCK_KEYS and 'yclose' in _SINA_STOCK_KEYS:
             df.loc[df.volume == 0, 'lasttrade'] = df['yclose']
         return df
 
@@ -327,7 +326,7 @@ class WebTrader():
             hq = self.hq(symbol)
             logger.debug('hq: %s' % hq.loc[symbol])
             price = hq.loc[symbol, 'lasttrade']
-            amount = amount if amount else round(volume * 0.9995, 2) // price // 100 * 100
+            amount = amount if amount else round(volume, 2) // price // 100 * 100
             if amount == 0:
                 return 0, 0
 

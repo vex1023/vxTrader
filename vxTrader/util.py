@@ -69,3 +69,13 @@ def code_to_symbols(code):
     if code.startswith(('5', '6', '9')):
         return 'sh' + code
     return 'sz' + code
+
+
+def to_time(exchange_time):
+    '''
+    格式化交易所返回的交易时间
+    :param yjb_time:
+    :return:
+    '''
+    exchange_time = '{:0>6}'.format(exchange_time)
+    return '%s:%s:%s' % (exchange_time[:2], exchange_time[2:4], exchange_time[4:6])

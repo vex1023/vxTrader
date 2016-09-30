@@ -200,6 +200,8 @@ class gfTrader(WebTrader):
         jsholder = re.findall(r'\[(.*)\]', jsholder)
         jsholder = eval(jsholder[0])
 
+        self._exchange_stock_account = dict()
+
         for holder in jsholder:
             if isinstance(holder, dict):
                 self._exchange_stock_account[holder['exchange_type']] = holder['stock_account']
