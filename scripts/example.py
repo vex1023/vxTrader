@@ -21,9 +21,14 @@ def get_trader():
 def main(trader):
     print(trader.portfolio)
     print('=' * 30)
+    print(trader.order_target_percent('sh510500', 0.2))
+    print(trader.order('sh510500', -300))
+    print(trader.order('sh510500', 300))
+    print(trader.order(300))
     print(trader.orderlist)
 
 
 if __name__ == '__main__':
     trader = get_trader()
+    logger.setLevel('DEBUG')
     main(trader)
