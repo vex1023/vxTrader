@@ -1,8 +1,10 @@
 # encoding=utf-8
 
 import os
+
 import demjson as json
-from vxTrader import TraderFactory, logger
+
+from vxTrader import create_trader, logger
 
 
 def get_trader():
@@ -15,7 +17,7 @@ def get_trader():
     if brokerid == '' or account == '' or password == '':
         raise EnvironmentError('enviroment value account(%s) or password(%s) is not set' % (account, password))
 
-    return TraderFactory.create(brokerid, account, password, **kwargs)
+    return create_trader(brokerid, account, password, **kwargs)
 
 
 def main(trader):

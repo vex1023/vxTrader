@@ -1,12 +1,11 @@
 # encoding = utf-8
 from __future__ import print_function
-from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
-import unittest
-import io
-import codecs
+
 import os
 import sys
+
+from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
 
 import vxTrader
 
@@ -18,7 +17,6 @@ requirements = [
     'numpy',
     'pandas',
     'pytesseract',
-    'cryptography',
     'demjson',
     'Pillow'
 ]

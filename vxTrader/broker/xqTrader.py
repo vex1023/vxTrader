@@ -4,13 +4,14 @@
 '''
 
 import time
-import six
+
 import demjson as json
 import pandas as pd
 import requests
+import six
 
-from vxTrader.TraderException import TraderAPIError
 from vxTrader import logger, TraderFactory
+from vxTrader.TraderException import TraderAPIError
 from vxTrader.broker.WebTrader import WebTrader, LoginSession, SessionPool
 
 _BASE_MULTIPE = 1000000.00
@@ -81,7 +82,7 @@ class xqLoginSession(LoginSession):
         return
 
 
-@TraderFactory('xq')
+@TraderFactory('xq', '雪球', '雪球组合')
 class xqTrader(WebTrader):
     def __init__(self, account, password, portfolio_code):
 
@@ -353,7 +354,7 @@ class xqTrader(WebTrader):
 
         return self._trade_api(symbol=symbol, target_percent=target_percent, portfolio=portfolio)
 
-    def sell(self, symbol, price, amount=0, volume=0):
+    def sell(self, symbol, price=0, amount=0, volume=0):
 
         symbol = symbol.lower()
 
