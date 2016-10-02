@@ -23,12 +23,18 @@ requirements = [
     'Pillow'
 ]
 
-readme = 'README.md'
-if os.path.exists('README.rst'):
+readme = None
+long_description = ''
+if os.path.exists('README.md'):
+    readme = 'README.md'
+elif os.path.exists('README.rst'):
     readme = 'README.rst'
 
-with open(readme, 'rb') as f:
-    long_description = f.read().decode('utf-8')
+if readme:
+    with open(readme, 'rb') as f:
+        long_description = f.read().decode('utf-8')
+
+
 
 
 class PyTest(TestCommand):
@@ -62,21 +68,19 @@ setup(
     description='vxTrader: A Chinese WebAPI wrapper',
     long_description=long_description,
     packages=find_packages(),
-    package_data={'': ['LICENSE', 'requirements']},
     include_package_data=True,
     platforms='any',
     test_suite='vxTrader.tests.test_vxTrader',
     classifiers=(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'Natural Language :: English',
+        'Natural Language :: Chinese',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5'
     ),
-    data_files=['requirements.txt'],
     extras_require={
         'testing': ['pytest'],
     }

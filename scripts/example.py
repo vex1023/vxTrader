@@ -24,7 +24,7 @@ def main(trader):
     print(trader.order_target_percent('sh510500', 0.2))
     print(trader.order('sh510500', -300))
     print(trader.order('sh510500', 300))
-    print(trader.order(300))
+    print(trader.cancel())
     print(trader.orderlist)
 
 
