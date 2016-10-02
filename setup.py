@@ -57,18 +57,6 @@ setup(
     include_package_data=True,
     platforms='any',
     test_suite='vxTrader.tests.test_vxTrader',
-    classifiers=[
-        'Programming Language :: Python3.5',
-        'Development Status :: 4 - Beta',
-        'Natural Language :: Chinese',
-        'Environment :: Web Environment',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: The MIT License (MIT)',
-        'Operating System :: OS Independent',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Software Development :: Libraries :: Application Frameworks',
-        'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
-    ],
     extras_require={
         'testing': ['pytest'],
     }
