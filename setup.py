@@ -12,8 +12,16 @@ import vxTrader
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-with open('requirements.txt') as f:
-    requirements = [l for l in f.read().splitlines() if l]
+requirements = [
+    'six',
+    'requests',
+    'numpy',
+    'pandas',
+    'pytesseract',
+    'cryptography',
+    'demjson',
+    'Pillow'
+]
 
 readme = 'README.md'
 if os.path.exists('README.rst'):
