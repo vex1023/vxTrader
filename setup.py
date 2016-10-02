@@ -47,13 +47,14 @@ setup(
     url='https://github.com/vex1023/vxTrader/',
     license='The MIT License (MIT)',
     author='vex1023',
-    tests_require=['pytest'],
+    author_email='vex1023@qq.com',
+    tests_requires=['pytest'],
     install_requires=requirements,
     cmdclass={'test': PyTest},
-    author_email='vex1023@qq.com',
     description='vxTrader: A Chinese WebAPI wrapper',
     long_description=long_description,
     packages=find_packages(),
+    package_data={'': ['LICENSE', 'requirements']},
     include_package_data=True,
     platforms='any',
     test_suite='vxTrader.tests.test_vxTrader',
@@ -67,7 +68,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5'
     ),
-    data_files=['requirements.txt']
+    data_files=['requirements.txt'],
     extras_require={
         'testing': ['pytest'],
     }
