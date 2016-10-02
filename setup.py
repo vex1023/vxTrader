@@ -80,6 +80,6 @@ setup(
         'Programming Language :: Python :: 3.5'
     ),
     extras_require={
-        'testing': ['pytest'],
+        'testing': ['pytest']
     }
 )
