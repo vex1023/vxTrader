@@ -32,5 +32,5 @@ def main(trader):
 
 if __name__ == '__main__':
     trader = get_trader()
-    logger.setLevel('DEBUG')
+    logger.setLevel('INFO')
     main(trader)

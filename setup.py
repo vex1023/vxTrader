@@ -60,7 +60,6 @@ setup(
     license='The MIT License (MIT)',
     author='vex1023',
     author_email='vex1023@qq.com',
-    tests_requires=['pytest'],
     install_requires=requirements,
     cmdclass={'test': PyTest},
     description='vxTrader: A Chinese WebAPI wrapper',
