@@ -1,6 +1,7 @@
-import unittest
-from vxTrader import TraderFactory, logger
 import os
+import unittest
+
+from vxTrader import create_trader
 
 
 class gfTraderTestCase(unittest.TestCase):
@@ -13,7 +14,7 @@ class gfTraderTestCase(unittest.TestCase):
         if brokerid == '' or account == '' or password == '':
             raise EnvironmentError('enviroment value account(%s) or password(%s) is not set' % (account, password))
 
-        self.trader = TraderFactory.create(brokerid, account, password)
+        self.trader = create_trader(brokerid, account, password)
 
     def test_gfLoginSession(self):
         print(self.trader.portfolio)

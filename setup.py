@@ -1,26 +1,38 @@
 # encoding = utf-8
 from __future__ import print_function
-from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
-import unittest
-import io
-import codecs
+
 import os
 import sys
+
+from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
 
 import vxTrader
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-with open('requirements.txt') as f:
-    requirements = [l for l in f.read().splitlines() if l]
+requirements = [
+    'six',
+    'requests',
+    'numpy',
+    'pandas',
+    'pytesseract',
+    'demjson',
+    'Pillow'
+]
 
-readme = 'README.md'
-if os.path.exists('README.rst'):
+readme = None
+long_description = ''
+if os.path.exists('README.md'):
+    readme = 'README.md'
+elif os.path.exists('README.rst'):
     readme = 'README.rst'
 
-with open(readme, 'rb') as f:
-    long_description = f.read().decode('utf-8')
+if readme:
+    with open(readme, 'rb') as f:
+        long_description = f.read().decode('utf-8')
+
+
 
 
 class PyTest(TestCommand):
@@ -47,29 +59,26 @@ setup(
     url='https://github.com/vex1023/vxTrader/',
     license='The MIT License (MIT)',
     author='vex1023',
-    tests_require=['pytest'],
+    author_email='vex1023@qq.com',
     install_requires=requirements,
     cmdclass={'test': PyTest},
-    author_email='vex1023@qq.com',
     description='vxTrader: A Chinese WebAPI wrapper',
     long_description=long_description,
     packages=find_packages(),
     include_package_data=True,
     platforms='any',
     test_suite='vxTrader.tests.test_vxTrader',
-    classifiers=[
-        'Programming Language :: Python3.5',
-        'Development Status :: 4 - Beta',
-        'Natural Language :: Chinese',
-        'Environment :: Web Environment',
+    classifiers=(
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: The MIT License (MIT)',
-        'Operating System :: OS Independent',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Software Development :: Libraries :: Application Frameworks',
-        'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
-    ],
+        'Natural Language :: Chinese',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5'
+    ),
     extras_require={
-        'testing': ['pytest'],
+        'testing': ['pytest']
     }
 )

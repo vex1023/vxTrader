@@ -7,16 +7,18 @@
 '''
 
 import re
-import uuid
 import time
-import requests
-import pytesseract
+import uuid
+
 import pandas as pd
-from vxTrader import logger, TraderFactory
-from vxTrader.broker.WebTrader import LoginSession, WebTrader, SessionPool
-from vxTrader.TraderException import VerifyCodeError, TraderAPIError
-from vxTrader.util import code_to_symbols, retry
+import pytesseract
+import requests
 from PIL import Image, ImageFilter
+
+from vxTrader import logger, TraderFactory
+from vxTrader.TraderException import VerifyCodeError, TraderAPIError
+from vxTrader.broker.WebTrader import LoginSession, WebTrader, SessionPool
+from vxTrader.util import code_to_symbols, retry
 
 FLOAT_COLUMNS = [
     'order_amount', 'order_price', 'lasttrade', 'current_amount', 'enable_amount', 'market_value',
@@ -174,7 +176,7 @@ class gfLoginSession(LoginSession):
         return resq
 
 
-@TraderFactory('gf')
+@TraderFactory('gf', '广发证券')
 class gfTrader(WebTrader):
     def __init__(self, account, password, **kwargs):
         super(gfTrader, self).__init__(account=account, password=password, **kwargs)

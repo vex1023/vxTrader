@@ -3,28 +3,24 @@
 佣金宝交易接口
 '''
 
+import random
+import re
 import ssl
-import time
 import urllib
-import requests
 import uuid
 
 import demjson
 import pandas as pd
 import pytesseract
-import random
-import re
-
+import requests
 from PIL import Image
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
-from vxTrader.broker.WebTrader import LoginSession, WebTrader, SessionPool
-from vxTrader.TraderException import VerifyCodeError, TraderAPIError, LoginFailedError, TraderNetworkError
-
-from vxTrader.util import code_to_symbols, retry, to_time
 from vxTrader import TraderFactory, logger
-
+from vxTrader.TraderException import VerifyCodeError, TraderAPIError, LoginFailedError
+from vxTrader.broker.WebTrader import LoginSession, WebTrader, SessionPool
+from vxTrader.util import code_to_symbols, retry, to_time
 
 TIMEOUT = 600
 
@@ -181,7 +177,7 @@ class yjbLoginSession(LoginSession):
         return r
 
 
-@TraderFactory('yjb')
+@TraderFactory('yjb', '佣金宝', '国金证券')
 class yjbTrader(WebTrader):
     def __init__(self, account, password, bank_password=None, fund_password=None):
 

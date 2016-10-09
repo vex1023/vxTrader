@@ -2,13 +2,14 @@
 
 
 __name__ = 'vxTrader'
-__version__ = '0.0.1'
+__version__ = '0.1.2'
 __author__ = 'vex1023'
 __email__ = 'vex1023@qq.com'
 
 __all__ = ['logger', 'TraderFactory']
 
 import logging
+
 from vxTrader.PrettyLogger import add_console_logger
 
 logger = logging.getLogger(__name__)
@@ -18,29 +19,33 @@ add_console_logger(logger)
 class TraderFactory():
     '''
     创建一个修饰器，注册vxTrader
-    @TraderFactory('yjb')
+    @TraderFactory('yjb', '佣金宝', '国金证券')
     class yjbTrader(WebTrader):
         pass
 
     '''
 
-    _instance = {}
+    instance = {}
 
-    def __init__(self, brokerID):
+    def __init__(self, *brokerIDs):
         # 使用小写作为关键字
-        self._brokerID = brokerID.lower()
+        self._brokerIDs = brokerIDs
 
     def __call__(self, cls):
-        TraderFactory._instance[self._brokerID] = cls
+        for brokerID in self._brokerIDs:
+            TraderFactory.instance[brokerID.lower()] = cls
         return cls
 
-    @classmethod
-    def create(cls, brokerID, account, password, **kwargs):
-        brokerID = brokerID.lower()
-        instance = cls._instance.get(brokerID, None)
-        if instance:
-            return instance(account, password, **kwargs)
 
+def create_trader(brokerID, account, password, **kwargs):
+    brokerID = brokerID.lower()
+    instance = TraderFactory.instance.get(brokerID, None)
 
+    if instance is None:
+        err_msg = 'broker ID: %s is not registered by trader factory(%s).' % (brokerID, TraderFactory.instance)
+        logger.error(err_msg)
+        raise NotImplementedError(err_msg)
+
+    return instance(account, password, **kwargs)
 # 自动加载相应的broker
 from vxTrader.broker import *
