@@ -19,7 +19,7 @@ from requests.packages.urllib3.poolmanager import PoolManager
 
 from vxTrader import TraderFactory, logger
 from vxTrader.TraderException import VerifyCodeError, TraderAPIError, LoginFailedError
-from vxTrader.broker.WebTrader import LoginSession, WebTrader, SessionPool
+from vxTrader.broker.WebTrader import LoginSession, WebTrader
 from vxTrader.util import code_to_symbols, retry, to_time
 
 TIMEOUT = 600
@@ -51,9 +51,11 @@ class Ssl3HttpAdapter(HTTPAdapter):
                                        ssl_version=ssl.PROTOCOL_TLSv1)
 
 
-
-@SessionPool.register('yjb')
 class yjbLoginSession(LoginSession):
+    '''
+    国金证券（佣金宝）登录session 管理
+    '''
+    LoginType = 'yjb'
     def __init__(self, account, password):
 
         # 初始化父类
@@ -67,9 +69,6 @@ class yjbLoginSession(LoginSession):
         self.disk_serial_id = "ST3250890AS"
         self.cpuid = "-41315-FA76111D"
         self.machinecode = "-41315-FA76111D"
-
-        self.expire_at = 0
-        self._exchange_stock_account = None
 
         # 校验码规则
         self.code_rule = re.compile("^[0-9]{4}$")
@@ -106,6 +105,7 @@ class yjbLoginSession(LoginSession):
             logger.debug('Verify Code is: %s' % code)
             return code
 
+    @retry(5, VerifyCodeError)
     def login(self):
 
         self.pre_login()
@@ -156,23 +156,24 @@ class yjbLoginSession(LoginSession):
 
     def request(self, method, url, **kwargs):
 
-        # 加入token
-        params = {
-            'CSRF_Token': 'undefined',
-            'timestamp': random.random()
-        }
-        params.update(
-            # 弹出kwargs中的params
-            kwargs.pop('params', {})
-        )
+        with self:
+            # 加入token
+            params = {
+                'CSRF_Token': 'undefined',
+                'timestamp': random.random()
+            }
+            params.update(
+                # 弹出kwargs中的params
+                kwargs.pop('params', {})
+            )
 
-        r = self.session.request(
-            method=method,
-            url=url,
-            params=params,
-            **kwargs
-        )
-        r.raise_for_status()
+            r = self.session.request(
+                method=method,
+                url=url,
+                params=params,
+                **kwargs
+            )
+            r.raise_for_status()
 
         return r
 

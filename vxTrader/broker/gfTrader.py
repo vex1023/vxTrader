@@ -17,7 +17,7 @@ from PIL import Image, ImageFilter
 
 from vxTrader import logger, TraderFactory
 from vxTrader.TraderException import VerifyCodeError, TraderAPIError
-from vxTrader.broker.WebTrader import LoginSession, WebTrader, SessionPool
+from vxTrader.broker.WebTrader import LoginSession, WebTrader
 from vxTrader.util import code_to_symbols, retry
 
 FLOAT_COLUMNS = [
@@ -41,8 +41,12 @@ RENAME_DICT = {
 TIMEOUT = 600
 
 
-@SessionPool.register('gf')
 class gfLoginSession(LoginSession):
+    '''
+    广发证券登录session管理
+    '''
+    LoginType = 'gf'
+
     def __init__(self, account, password):
 
         # 初始化父类
@@ -146,6 +150,8 @@ class gfLoginSession(LoginSession):
         if data['success']:
             v = resq.headers
             self._dse_sessionId = v['Set-Cookie'][-32:]
+            # 等待服务器准备就绪
+            time.sleep(0.1)
             logger.info('Login success: %s' % self._dse_sessionId)
             return
         elif data['error_info'].find('验证码') != -1:
@@ -159,20 +165,16 @@ class gfLoginSession(LoginSession):
 
     def request(self, method, url, **kwargs):
 
-        # 如果sessionId是空的，就去获取一下
-        if self._dse_sessionId is None:
-            self.session
+        with self:
+            params = kwargs.get('params', {})
+            params.update({'dse_sessionId': self._dse_sessionId})
+            kwargs['params'] = params
 
-        params = kwargs.get('params', {})
-        params.update({'dse_sessionId': self._dse_sessionId})
-        kwargs['params'] = params
-
-        logger.debug('Call params: %s' % kwargs)
-        resq = self.session.request(method=method, url=url, **kwargs)
-        resq.raise_for_status()
-        logger.debug('return: %s' % resq.text)
-        self._expire_at = time.time() + TIMEOUT
-
+            logger.debug('Call params: %s' % kwargs)
+            resq = self._session.request(method=method, url=url, **kwargs)
+            resq.raise_for_status()
+            logger.debug('return: %s' % resq.text)
+            self._expire_at = time.time() + TIMEOUT
         return resq
 
 
@@ -180,7 +182,7 @@ class gfLoginSession(LoginSession):
 class gfTrader(WebTrader):
     def __init__(self, account, password, **kwargs):
         super(gfTrader, self).__init__(account=account, password=password, **kwargs)
-        self.client = SessionPool.get('gf', account=account, password=password)
+        self.client = gfLoginSession(account=account, password=password)
 
     @property
     def exchange_stock_account(self):
@@ -209,7 +211,6 @@ class gfTrader(WebTrader):
                 self._exchange_stock_account[holder['exchange_type']] = holder['stock_account']
 
         return self._exchange_stock_account
-
 
     @property
     def portfolio(self):

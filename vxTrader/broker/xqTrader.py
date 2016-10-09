@@ -12,7 +12,7 @@ import six
 
 from vxTrader import logger, TraderFactory
 from vxTrader.TraderException import TraderAPIError
-from vxTrader.broker.WebTrader import WebTrader, LoginSession, SessionPool
+from vxTrader.broker.WebTrader import WebTrader, LoginSession
 
 _BASE_MULTIPE = 1000000.00
 
@@ -44,8 +44,12 @@ def to_text(value, encoding="utf-8"):
     return six.text_type(value)
 
 
-@SessionPool.register('xq')
 class xqLoginSession(LoginSession):
+    '''
+    雪球登录session管理
+    '''
+    LoginType = 'xq'
+
     def pre_login(self):
         self._session = requests.session()
         self._session.headers.update(_HEADERS)
@@ -88,7 +92,7 @@ class xqTrader(WebTrader):
 
         super(xqTrader, self).__init__(account=account, password=password, pool_size=2)
         self.portfolio_code = portfolio_code
-        self.client = SessionPool.get('xq', account=account, password=password)
+        self.client = xqLoginSession(account=account, password=password)
 
     @property
     def portfolio(self):
@@ -245,9 +249,9 @@ class xqTrader(WebTrader):
             'comment': comment
         }
 
-        self.client.session.headers.update(
+        self.client.headers.update(
             referer='https://xueqiu.com/p/update?action=holdings&symbol=%s' % self.portfolio_code)
-        logger.info(self.client.session.headers)
+        logger.debug(self.client.session.headers)
 
         try:
             r = self.client.post(url='https://xueqiu.com/cubes/rebalancing/create.json', params=params)
@@ -317,9 +321,9 @@ class xqTrader(WebTrader):
             'comment': comment
         }
 
-        self.client.session.headers.update(
+        self.client.headers.update(
             referer='https://xueqiu.com/p/update?action=holdings&symbol=%s' % self.portfolio_code)
-        logger.info(self.client.session.headers)
+        logger.debug(self.client.session.headers)
 
         try:
             r = self.client.post(url='https://xueqiu.com/cubes/rebalancing/create.json', params=params)

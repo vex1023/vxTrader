@@ -2,16 +2,17 @@
 '''
   webtrader 的基础类
 '''
-import time
 import hashlib
-import requests
-import numpy as np
-import pandas as pd
 import multiprocessing
+import time
 from multiprocessing.pool import ThreadPool as Pool
 
-from vxTrader.TraderException import TraderAPIError, TraderError
+import numpy as np
+import pandas as pd
+import requests
+
 from vxTrader import logger
+from vxTrader.TraderException import TraderAPIError, TraderError
 
 _MAX_LIST = 800
 
@@ -86,21 +87,72 @@ class SessionPool():
             return obj
 
 
-@SessionPool.register('base')
 class LoginSession():
+    _objects = {}
+    LoginType = 'base'
+
+    def __new__(cls, account, password):
+        '''
+        创建loginSession类时，如果同一券商的账号密码都一样时，只创建一次
+        '''
+
+        logger.debug('LoginType: %s, account: %s, password: %s' % (cls.LoginType, account, password))
+
+        # LoginType, account, password 是用MD5进行创建关键字
+        m = hashlib.md5()
+        m.update(cls.LoginType.encode('utf-8'))
+        m.update(account.encode('utf-8'))
+        m.update(password.encode('utf-8'))
+        keyword = m.hexdigest()
+
+        obj = cls._objects.get(keyword)
+        logger.debug('keyword: %s, obj: %s' % (keyword, obj))
+        if obj is None:
+            # 如果没有缓存过此对象，就创建，并进行缓存
+            logger.debug('缓存内没有对象，重新创建一个对象')
+            obj = super(LoginSession, cls).__new__(cls)
+            cls._objects[keyword] = obj
+
+        return obj
+
     def __init__(self, account, password):
+
         self._account = account
         self._password = password
 
         # 内部的session 初始化，expire_at 初始化
         self._session = None
         self._expire_at = 0
-        # self._exchange_stock_account = dict()
 
         # 初始化线程锁
         self.lock = multiprocessing.Lock()
 
+    def __enter__(self):
+        with self.lock:
+            now = time.time()
+            if now > self._expire_at:
+                # 如果登录超时了，重新登录
+                # 登录前准备工作
+                self.pre_login()
+                # 登录
+                self.login()
+                # 更新超时时间
+                self._expire_at = now + _TIMEOUT
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+    def __getattr__(self, name):
+        if self._session:
+            return self._session.__getattribute__(name)
+
     def pre_login(self):
+        '''
+        登录前准备动作，如：创建self._session
+        :return:
+        '''
         # 默认创建一个requests.session对象
         self._session = requests.session()
 
@@ -112,7 +164,12 @@ class LoginSession():
         with self.lock:
             now = time.time()
             if now > self._expire_at:
+                # 如果登录超时了，重新登录
+                # 登录前准备工作
+                self.pre_login()
+                # 登录
                 self.login()
+                # 更新超时时间
                 self._expire_at = now + _TIMEOUT
         return self._session
 
@@ -127,10 +184,11 @@ class LoginSession():
         调用session的各类http方法
         '''
         logger.debug('Call params: %s' % kwargs)
-        resq = self.session.request(method=method, url=url, **kwargs)
-        resq.raise_for_status()
-        logger.debug('return: %s' % resq.text)
-        self._expire_at = time.time() + _TIMEOUT
+        with self:
+            resq = self.session.request(method=method, url=url, **kwargs)
+            resq.raise_for_status()
+            logger.debug('return: %s' % resq.text)
+            self._expire_at = time.time() + _TIMEOUT
         return resq
 
     def get(self, url, **kwargs):
@@ -149,7 +207,6 @@ class WebTrader():
         # 初始化线程池
         pool_size = kwargs.pop('pool_size', 5)
         self._worker = Pool(pool_size)
-
 
     def keepalive(self, now=0):
         '''
