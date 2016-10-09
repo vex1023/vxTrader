@@ -146,6 +146,8 @@ class gfLoginSession(LoginSession):
         if data['success']:
             v = resq.headers
             self._dse_sessionId = v['Set-Cookie'][-32:]
+            # 等待服务器就绪再提交
+            time.sleep(0.01)
             logger.info('Login success: %s' % self._dse_sessionId)
             return
         elif data['error_info'].find('验证码') != -1:
