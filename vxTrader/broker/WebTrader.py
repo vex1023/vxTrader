@@ -37,56 +37,6 @@ _HEADERS = {
 _TIMEOUT = 600
 
 
-class SessionPool():
-    '''
-    登录session 的池子。
-    同一用户在统一渠道内登录过了，就不在重复登录
-    '''
-    # _instance 存储初始化对象；
-    _instance = {}
-    # _object 存储已经初始化过的对象
-    _object = {}
-    # _lock多线程的线程锁
-    _lock = multiprocessing.Lock()
-
-    @classmethod
-    def register(cls, session_type):
-        '''
-        用于注册的修饰器
-        '''
-
-        def wrapped(wrapped_cls):
-            cls._instance[session_type] = wrapped_cls
-            return wrapped_cls
-
-        return wrapped
-
-    @classmethod
-    def get(cls, session_type, account, password):
-        '''
-        获取登录session的方法
-        '''
-        m = hashlib.md5()
-        m.update(session_type.encode('utf-8'))
-        m.update(account.encode('utf-8'))
-        m.update(password.encode('utf-8'))
-        # session_type, account, password 是用MD5进行创建关键字
-        keyword = m.hexdigest()
-        logger.debug('keyword is : %s' % keyword)
-
-        with cls._lock:
-            # 先查看一下是否已经创建了一个obj，如果有就直接返回该obj
-            obj = cls._object.get(keyword, None)
-            # 如果没有创建过，那么就创建
-            if obj is None:
-                # 看一下类是否已经初始化
-                session_class = cls._instance.get(session_type, LoginSession)
-                # 创建一个obj，并且保存到cls._object里面
-                obj = session_class(account, password)
-                cls._object[keyword] = obj
-            return obj
-
-
 class LoginSession():
     _objects = {}
     LoginType = 'base'

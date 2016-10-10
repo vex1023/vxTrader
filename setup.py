@@ -33,8 +33,6 @@ if readme:
         long_description = f.read().decode('utf-8')
 
 
-
-
 class PyTest(TestCommand):
     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
 

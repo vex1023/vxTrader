@@ -363,7 +363,7 @@ class gfTrader(WebTrader):
             entrust_prop=0,  # 委托方式
             classname='com.gf.etrade.control.StockUF2Control',
             method='entrust',
-            entrust_bs=1,
+            entrust_bs=2,
             stock_account=self.exchange_stock_account[exchange_type],
             exchange_type=exchange_type,
             stock_code=symbol[2:],
