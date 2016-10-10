@@ -8,6 +8,7 @@ import re
 import ssl
 import urllib
 import uuid
+from io import BytesIO
 
 import demjson
 import pandas as pd
@@ -55,7 +56,6 @@ class yjbLoginSession(LoginSession):
     '''
     国金证券（佣金宝）登录session 管理
     '''
-    LoginType = 'yjb'
     def __init__(self, account, password):
 
         # 初始化父类
@@ -92,12 +92,12 @@ class yjbLoginSession(LoginSession):
         )
         r.raise_for_status()
 
-        with open('.yjb_%s_vcode.png' % self._account, 'wb') as pic:
-            pic.write(r.content)
-
-        img = Image.open('.yjb_%s_vcode.png' % self._account)
+        # 通过内存保存数据
+        img_buffer = BytesIO(r.content)
+        img = Image.open(img_buffer)
         code = pytesseract.image_to_string(img)
         img.close()
+        img_buffer.close()
 
         if self.code_rule.findall(code) == []:
             raise VerifyCodeError('Wrong verify code: %s' % code)

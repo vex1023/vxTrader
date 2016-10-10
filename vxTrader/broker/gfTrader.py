@@ -9,6 +9,7 @@
 import re
 import time
 import uuid
+from io import BytesIO
 
 import pandas as pd
 import pytesseract
@@ -45,7 +46,6 @@ class gfLoginSession(LoginSession):
     '''
     广发证券登录session管理
     '''
-    LoginType = 'gf'
 
     def __init__(self, account, password):
 
@@ -92,12 +92,12 @@ class gfLoginSession(LoginSession):
     def vcode(self):
 
         # 获取校验码
-        resq = self._session.get('https://trade.gf.com.cn/yzm.jpgx')
-        resq.raise_for_status()
-        # 保存文件
-        with open('.gf_%s_vcode.png' % self._account[:10], 'wb') as pic:
-            pic.write(resq.content)
-        img = Image.open('.gf_%s_vcode.png' % self._account[:10])
+        r = self._session.get('https://trade.gf.com.cn/yzm.jpgx')
+        r.raise_for_status()
+
+        # 通过内存保存图片，进行识别
+        img_buffer = BytesIO(r.content)
+        img = Image.open(img_buffer)
         if hasattr(img, "width"):
             width, height = img.width, img.height
         else:
@@ -116,6 +116,9 @@ class gfLoginSession(LoginSession):
 
         # 通过tesseract-ocr的工具进行校验码识别
         vcode = pytesseract.image_to_string(med_res)
+        img.close()
+        img_buffer.close()
+
         vcode = vcode.replace(' ', '')
         if self.code_rule.findall(vcode) != []:
             logger.debug('vcode is: %s' % vcode)
@@ -228,8 +231,16 @@ class gfTrader(WebTrader):
 
         # 处理持仓
         position = position.get().copy()
+
+        if position.shape[0] > 0:
+            position = position[
+                ['symbol', 'symbol_name', 'current_amount', 'enable_amount', 'lasttrade', 'market_value']]
+        else:
+            position = pd.DataFrame([], columns=['order_no', 'symbol', 'symbol_name', 'trade_side', 'order_price', \
+                                                 'order_amount', 'business_price', 'business_amount', 'order_status',
+                                                 'order_time'])
         position = position.set_index('symbol')
-        position = position[['symbol_name', 'current_amount', 'enable_amount', 'lasttrade', 'market_value']]
+
 
         # 处理现金
         balance = balance.get().copy()
@@ -306,7 +317,7 @@ class gfTrader(WebTrader):
             batch_flag=0
         )
 
-        return df
+        return df['order_no'].iloc[0]
 
     def buy(self, symbol, price=0, amount=0, volume=0):
 
@@ -363,7 +374,7 @@ class gfTrader(WebTrader):
             entrust_prop=0,  # 委托方式
             classname='com.gf.etrade.control.StockUF2Control',
             method='entrust',
-            entrust_bs=1,
+            entrust_bs=2,  # 1 买入， 2 卖出
             stock_account=self.exchange_stock_account[exchange_type],
             exchange_type=exchange_type,
             stock_code=symbol[2:],
@@ -372,10 +383,84 @@ class gfTrader(WebTrader):
 
         return df['order_no'].iloc[0]
 
-    def subscription(self, symbol, volume):
+    def subscribe(self, symbol, volume):
 
-        pass
+        # 转换成交易所sz或者sh开头的symbol
+        symbol = code_to_symbols(symbol[2:])
+
+        exchange_type = '1' if symbol[:2] == 'sh' else '2'
+
+        df = self._trade_api(
+            entrust_amount=volume,
+            classname='com.gf.etrade.control.StockUF2Control',
+            method='CNJJSS',
+            entrust_bs=1,  # 1 买入， 2 卖出
+            stock_account=self.exchange_stock_account[exchange_type],
+            exchange_type=exchange_type,
+            stock_code=symbol[2:],
+            entrust_price=0,
+        )
+
+        return df['order_no'].iloc[0]
 
     def redemption(self, symbol, amount):
 
-        pass
+        # 转换成交易所sz或者sh开头的symbol
+        symbol = code_to_symbols(symbol[2:])
+
+        exchange_type = '1' if symbol[:2] == 'sh' else '2'
+
+        df = self._trade_api(
+            entrust_amount=amount,
+            classname='com.gf.etrade.control.StockUF2Control',
+            method='CNJJSS',
+            entrust_bs=2,  # 1 买入， 2 卖出
+            stock_account=self.exchange_stock_account[exchange_type],
+            exchange_type=exchange_type,
+            stock_code=symbol[2:],
+            entrust_price=0,
+        )
+
+        return df['order_no'].iloc[0]
+
+    def merge(self, symbol, amount):
+
+        # 转换成交易所sz或者sh开头的symbol
+        symbol = code_to_symbols(symbol[2:])
+
+        exchange_type = '1' if symbol[:2] == 'sh' else '2'
+
+        df = self._trade_api(
+            classname='com.gf.etrade.control.SHLOFFundControl',
+            method='assetSecuprtTrade',
+            entrust_bs='',
+            entrust_amount=amount,
+            stock_account=self.exchange_stock_account[exchange_type],
+            exchange_type=exchange_type,
+            stock_code=symbol[2:],
+            entrust_prop='LFM',
+            entrust_price=1
+        )
+
+        return df['order_no'].iloc[0]
+
+    def split(self, symbol, amount):
+
+        # 转换成交易所sz或者sh开头的symbol
+        symbol = code_to_symbols(symbol[2:])
+
+        exchange_type = '1' if symbol[:2] == 'sh' else '2'
+
+        df = self._trade_api(
+            classname='com.gf.etrade.control.SHLOFFundControl',
+            method='doDZJYEntrust',
+            entrust_bs='',
+            entrust_amount=amount,
+            stock_account=self.exchange_stock_account[exchange_type],
+            exchange_type=exchange_type,
+            stock_code=symbol[2:],
+            entrust_prop='LFP',
+            entrust_price=1
+        )
+
+        return df['order_no'].iloc[0]

@@ -89,23 +89,22 @@ class SessionPool():
 
 class LoginSession():
     _objects = {}
-    LoginType = 'base'
 
     def __new__(cls, account, password):
         '''
         创建loginSession类时，如果同一券商的账号密码都一样时，只创建一次
         '''
 
-        logger.debug('LoginType: %s, account: %s, password: %s' % (cls.LoginType, account, password))
+        logger.debug('LoginType: %s, account: %s, password: %s' % (type(cls), account, password))
 
-        # LoginType, account, password 是用MD5进行创建关键字
+        # cls, account, password 是用MD5进行创建关键字
         m = hashlib.md5()
-        m.update(cls.LoginType.encode('utf-8'))
+        m.update(str(type(cls)).encode('utf-8'))
         m.update(account.encode('utf-8'))
         m.update(password.encode('utf-8'))
         keyword = m.hexdigest()
 
-        obj = cls._objects.get(keyword)
+        obj = cls._objects.get(keyword, None)
         logger.debug('keyword: %s, obj: %s' % (keyword, obj))
         if obj is None:
             # 如果没有缓存过此对象，就创建，并进行缓存
@@ -287,9 +286,9 @@ class WebTrader():
         '''
         raise NotImplementedError('Sell Not Implemented.')
 
-    def subscription(self, symbol, volume):
+    def subscribe(self, symbol, volume):
         '''
-        基金申购接口
+        场内基金申购接口
         :param symbol: 基金代码,以of 开头
         :param volume: 申购金额
         :return : order_no
@@ -298,7 +297,7 @@ class WebTrader():
 
     def redemption(self, symbol, amount):
         '''
-        基金赎回接口
+        场内基金赎回接口
         :param symbol: 基金代码,以of 开头
         :param amount: 赎回份额
         :return: order_no
