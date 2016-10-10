@@ -358,7 +358,11 @@ class WebTrader():
         for i in range(int((wait + 1) / 2)):
             logger.info('Check Order Status %s times.' % i)
             orderlist = self.orderlist
-            status = orderlist.loc[order_no, 'order_status']
+            if order_no in orderlist.index:
+                status = orderlist.loc[order_no, 'order_status']
+            else:
+                # 如果记录的订单号不在orderlist里面，则认为已经成交了。
+                status = '已成'
 
             if status in ('已成'):
                 logger.info('Order Success. %s' % orderlist.loc[order_no])
