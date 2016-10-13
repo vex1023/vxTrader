@@ -343,7 +343,7 @@ class yjbTrader(WebTrader):
 
         return df['order_no'].iloc[0]
 
-    def subscription(self, symbol, volume):
+    def subscribe(self, symbol, volume):
 
         symbol = symbol.lower()
         df = self._trade_api(
@@ -367,6 +367,10 @@ class yjbTrader(WebTrader):
         )
 
         return df
+
+    def redemption(self, symbol, amount):
+        pass
+
 
     def trans_in(self, cash_in, bank_no=None):
 

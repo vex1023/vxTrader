@@ -66,16 +66,16 @@ setup(
     include_package_data=True,
     platforms='any',
     test_suite='vxTrader.tests.test_vxTrader',
-    classifiers=(
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Natural Language :: Chinese',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5'
-    ),
+    #    classifiers=(
+    #        'Development Status :: 5 - Production/Stable',
+    #        'Intended Audience :: Developers',
+    #        'Natural Language :: Chinese',
+    #        'Programming Language :: Python',
+    #        'Programming Language :: Python :: 3',
+    #        'Programming Language :: Python :: 3.3',
+    #        'Programming Language :: Python :: 3.4',
+    #        'Programming Language :: Python :: 3.5'
+    #    ),
     extras_require={
         'testing': ['pytest']
     }
