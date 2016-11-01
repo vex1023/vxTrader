@@ -62,6 +62,9 @@ class gfLoginSession(LoginSession):
         # 交易用的sessionId
         self._dse_sessionId = None
 
+        # 融资融券标志
+        self.margin = False
+
     def pre_login(self):
         '''
         初始化session，以及需要的headers
@@ -180,6 +183,25 @@ class gfLoginSession(LoginSession):
             self._expire_at = time.time() + TIMEOUT
         return resq
 
+    def post_login(self):
+
+        if self.margin:
+            r = self.session.post(
+                url='https://trade.gf.com.cn/entry',
+                classname='com.gf.etrade.control.RZRQUF2Control',
+                method='ValidataLogin'
+            )
+            data = r.json()
+
+            if data.get('success', False) == False:
+                logger.error(data)
+                error_info = data.get('error_info', data)
+                raise TraderAPIError(error_info)
+
+            logger.debug('Login Margin Success.')
+
+        return
+
 
 @TraderFactory('gf', '广发证券')
 class gfTrader(WebTrader):
@@ -240,7 +262,6 @@ class gfTrader(WebTrader):
                                                  'order_amount', 'business_price', 'business_amount', 'order_status',
                                                  'order_time'])
         position = position.set_index('symbol')
-
 
         # 处理现金
         balance = balance.get().copy()
@@ -464,3 +485,10 @@ class gfTrader(WebTrader):
         )
 
         return df['order_no'].iloc[0]
+
+
+class gfMarginTrader(WebTrader):
+    def __init__(self, account, password, **kwargs):
+        super(gfTrader, self).__init__(account=account, password=password, **kwargs)
+        self.client = gfLoginSession(account=account, password=password)
+        self.client.margin = True

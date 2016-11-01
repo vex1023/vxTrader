@@ -11,7 +11,7 @@ __all__ = ['logger', 'TraderFactory']
 import configparser
 import logging
 
-from vxTrader.PrettyLogger import add_console_logger
+from vxUtils.PrettyLogger import add_console_logger
 
 logger = logging.getLogger(__name__)
 add_console_logger(logger)
