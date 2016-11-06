@@ -313,6 +313,22 @@ class WebTrader():
         '''
         raise NotImplementedError('IPO subscribe Not Implemented.')
 
+    def ipo_limit(self):
+        '''
+        查询当前ipo 认购限额
+        :return:
+        '''
+        raise NotImplementedError('ipo_limit Not Implemented.')
+
+    def ipo_list(self):
+        '''
+        查询今天IPO股票
+        返回列表：
+        index: symbol
+        columns: symbol_name, exchange_type, subscribe_type, max_buy_amount, buy_unit, money_type, ipo_price, ipo_date, ipo_status
+        '''
+        raise NotImplementedError('ipo_list Not Implemented.')
+
     def trans_in(self, cash_in, bank_no=None):
         '''
         资金转入
