@@ -2,7 +2,7 @@
 
 
 __name__ = 'vxTrader'
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 __author__ = 'vex1023'
 __email__ = 'vex1023@qq.com'
 
