@@ -58,9 +58,12 @@ if __name__ == '__main__':
 
     traders = load_traders('/etc/vxQuant/vxTrader.conf')
 
-    for key in traders.keys():
-        print('=' * 30 + key + '=' * 30)
-        trader = traders[key]
-        print(trader.portfolio)
-    print('==' * 30)
-    print(traders['xqcash'].portfolio['market_value'].sum())
+    trader = traders['wife']
+
+    print(trader.ipo_list())
+    print('=' * 30)
+    print(trader.ipo_list().columns)
+    print('=' * 30)
+    print(trader.ipo_limit())
+    print('=' * 30)
+    print(trader.ipo_limit().columns)
