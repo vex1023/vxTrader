@@ -139,6 +139,22 @@ class LoginSession():
         '''
         raise NotImplementedError('Login method is not implemented.')
 
+    def logout(self):
+        '''
+        退出登录接口
+        '''
+
+        self._session = None
+        self._expire_at = 0
+
+    def reset(self):
+        '''
+        重置session
+        '''
+        self.logout()
+        time.sleep(0.5)
+        self.session
+
     def request(self, method, url, **kwargs):
         '''
         调用session的各类http方法
