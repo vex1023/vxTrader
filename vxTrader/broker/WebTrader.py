@@ -2,6 +2,12 @@
 '''
   webtrader 的基础类
 '''
+
+import importlib
+import sys
+
+importlib.reload(sys)
+
 import hashlib
 import multiprocessing
 import time
@@ -87,6 +93,8 @@ class LoginSession():
                 self.login()
                 # 更新超时时间
                 self._expire_at = now + _TIMEOUT
+                # 执行登陆后初始化工作
+                self.post_login()
 
         return self
 
@@ -104,6 +112,9 @@ class LoginSession():
         '''
         # 默认创建一个requests.session对象
         self._session = requests.session()
+
+    def post_login(self):
+        pass
 
     @property
     def session(self):
@@ -156,6 +167,8 @@ class WebTrader():
         # 初始化线程池
         pool_size = kwargs.pop('pool_size', 5)
         self._worker = Pool(pool_size)
+        # session超时时间
+        self.expire_at = 0
 
     def keepalive(self, now=0):
         '''
@@ -167,6 +180,7 @@ class WebTrader():
         logger.debug('keepalive checking. now: %s, expire_at: %s' % (now, self.expire_at))
         if now + 60 > self.expire_at:
             self.portfolio
+            self.expire_at = now + 600
             logger.info('Reflash the expire time, expire_at timestamp is: %s' % self.expire_at)
 
         return
@@ -298,6 +312,22 @@ class WebTrader():
         :return: order_no
         '''
         raise NotImplementedError('IPO subscribe Not Implemented.')
+
+    def ipo_limit(self):
+        '''
+        查询当前ipo 认购限额
+        :return:
+        '''
+        raise NotImplementedError('ipo_limit Not Implemented.')
+
+    def ipo_list(self):
+        '''
+        查询今天IPO股票
+        返回列表：
+        index: symbol
+        columns: symbol_name, exchange_type, subscribe_type, max_buy_amount, buy_unit, money_type, ipo_price, ipo_date, ipo_status
+        '''
+        raise NotImplementedError('ipo_list Not Implemented.')
 
     def trans_in(self, cash_in, bank_no=None):
         '''

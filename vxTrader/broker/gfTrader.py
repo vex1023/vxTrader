@@ -62,6 +62,9 @@ class gfLoginSession(LoginSession):
         # 交易用的sessionId
         self._dse_sessionId = None
 
+        # 融资融券标志
+        self.margin = False
+
     def pre_login(self):
         '''
         初始化session，以及需要的headers
@@ -180,6 +183,25 @@ class gfLoginSession(LoginSession):
             self._expire_at = time.time() + TIMEOUT
         return resq
 
+    def post_login(self):
+
+        if self.margin:
+            r = self.session.post(
+                url='https://trade.gf.com.cn/entry',
+                classname='com.gf.etrade.control.RZRQUF2Control',
+                method='ValidataLogin'
+            )
+            data = r.json()
+
+            if data.get('success', False) == False:
+                logger.error(data)
+                error_info = data.get('error_info', data)
+                raise TraderAPIError(error_info)
+
+            logger.debug('Login Margin Success.')
+
+        return
+
 
 @TraderFactory('gf', '广发证券')
 class gfTrader(WebTrader):
@@ -224,6 +246,8 @@ class gfTrader(WebTrader):
             'method': 'queryAssert'
         })
 
+        balance = balance.get().copy()
+
         position = self._worker.apply_async(self._trade_api, kwds={
             'classname': 'com.gf.etrade.control.StockUF2Control',
             'method': 'queryCC'
@@ -241,9 +265,7 @@ class gfTrader(WebTrader):
                                                  'order_time'])
         position = position.set_index('symbol')
 
-
         # 处理现金
-        balance = balance.get().copy()
         asset_balance = balance['asset_balance'].iloc[0]
         position.loc['cash', 'symbol_name'] = balance['money_type_dict'].iloc[0]
         position.loc['cash', 'current_amount'] = balance['current_balance'].iloc[0]
@@ -464,3 +486,52 @@ class gfTrader(WebTrader):
         )
 
         return df['order_no'].iloc[0]
+
+    def ipo_limit(self):
+        df = self._trade_api(
+            classname='com.gf.etrade.control.StockUF2Control',
+            method='querySecuSubequity',
+            limit=50
+        )
+        if df.shape[0] == 0:
+            df = pd.DataFrame([], columns=['exchange_type', 'exchange_stock_account', 'amount_limits', \
+                                           'accountno', 'init_date'])
+        else:
+            df = df[['exchange_type', 'stock_account', 'enable_amount', 'client_id', 'init_date']]
+            rename = {
+                'stock_account': 'exchange_stock_account',
+                'enable_amount': 'amount_limits',
+                'client_id': 'accountno'
+            }
+            df.rename(columns=rename, inplace=True)
+            df.set_index('exchange_type', inplace=True)
+        return df
+
+    def ipo_list(self):
+        df = self._trade_api(
+            classname='com.gf.etrade.control.StockUF2Control',
+            method='queryNewStkcode',
+            request_num=50,
+            query_direction=1
+        )
+
+        if df.shape[0] == 0:
+            df = pd.DataFrame([], columns=['symbol', 'symbol_name', 'exchange_type', 'subscribe_type', \
+                                           'max_buy_amount', 'buy_unit', 'money_type', 'ipo_price', \
+                                           'ipo_date', 'ipo_status'])
+        else:
+            df = df[['symbol', 'symbol_name', 'exchange_type', 'stock_type_dict', \
+                     'high_amount', 'buy_unit', 'money_type_dict', 'lasttrade', 'issue_date', 'stkcode_status_dict']]
+
+            rename = {
+                'stock_type_dict': 'subscribe_type',
+                'high_amount': 'max_buy_amount',
+                'money_type_dict': 'money_type',
+                'lasttrade': 'ipo_price',
+                'issue_date': 'ipo_date',
+                'stkcode_status_dict': 'ipo_status'
+            }
+            df.rename(columns=rename, inplace=True)
+            df.set_index('symbol', inplace=True)
+
+        return df

@@ -2,7 +2,7 @@
 
 
 __name__ = 'vxTrader'
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 __author__ = 'vex1023'
 __email__ = 'vex1023@qq.com'
 
@@ -11,7 +11,7 @@ __all__ = ['logger', 'TraderFactory']
 import configparser
 import logging
 
-from vxTrader.PrettyLogger import add_console_logger
+from vxUtils.PrettyLogger import add_console_logger
 
 logger = logging.getLogger(__name__)
 add_console_logger(logger)

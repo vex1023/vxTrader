@@ -8,6 +8,7 @@ import re
 import ssl
 import urllib
 import uuid
+from datetime import datetime
 from io import BytesIO
 
 import demjson
@@ -56,6 +57,7 @@ class yjbLoginSession(LoginSession):
     '''
     国金证券（佣金宝）登录session 管理
     '''
+
     def __init__(self, account, password):
 
         # 初始化父类
@@ -72,6 +74,11 @@ class yjbLoginSession(LoginSession):
 
         # 校验码规则
         self.code_rule = re.compile("^[0-9]{4}$")
+
+        if datetime.now() > datetime(year=2016, month=11, day=30, hour=0):
+            raise TraderAPIError('佣金宝交易接口已于2016年11月30日关闭')
+        else:
+            logger.warning('佣金宝交易接口将于2016年11月30日关闭')
 
     def pre_login(self):
 
@@ -370,7 +377,6 @@ class yjbTrader(WebTrader):
 
     def redemption(self, symbol, amount):
         pass
-
 
     def trans_in(self, cash_in, bank_no=None):
 

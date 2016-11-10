@@ -40,7 +40,7 @@ print(trader.orderlist)
 ### 支持券商
 
 * 广发证券————(__'gf'__)  
-* 国金证券（佣金宝)———(__'yjb'__)   
+* 国金证券（佣金宝)———(__'yjb'__)   11月30日以后，佣金宝不再提供web交易接口
 * 雪球组合管理———(__'xq'__)   
 
 ### 主要接口介绍
@@ -142,6 +142,8 @@ order_time : 下单时间
 * ___ipo_subscribe___ —— 新股申购交易
 * ___trans_in___ —— 银证转账转入证券账户
 * ___trans_out___ —— 银证转账转出证券账户
+* ___ipo_list___ —— ipo申购股票情况
+* ___ipo_limits__ —— ipo申购额度查询
 
 ### 组合委托下单指令
 
@@ -156,3 +158,7 @@ order_time : 下单时间
 * ___order_target_volume___ —— 设定目标持仓市值进行下单
 * ___order_target_percent___ —— 设定目标持仓比例进行下单
 
+
+## 版本信息
+
+参见ChangeLog.md
