@@ -24,8 +24,7 @@ from vxTrader.util import code_to_symbols, retry
 FLOAT_COLUMNS = [
     'order_amount', 'order_price', 'lasttrade', 'current_amount', 'enable_amount', 'market_value',
     'enable_balance', 'current_balance', 'net_balance', 'asset_balance', 'business_price', 'business_amount',
-    'order_amount', 'order_price'
-]
+    'order_amount', 'order_price', 'fund_balance']
 
 RENAME_DICT = {
     'last_price': 'lasttrade',
@@ -181,7 +180,7 @@ class gfLoginSession(LoginSession):
             r.raise_for_status()
             logger.debug('return: %s' % r.text)
             self._expire_at = time.time() + TIMEOUT
-        return resq
+        return r
 
     def post_login(self):
 
@@ -278,10 +277,10 @@ class gfTrader(WebTrader):
         # 处理现金
         asset_balance = balance['asset_balance'].iloc[0]
         position.loc['cash', 'symbol_name'] = balance['money_type_dict'].iloc[0]
-        position.loc['cash', 'fund_balance'] = balance['current_balance'].iloc[0]
+        position.loc['cash', 'current_amount'] = balance['fund_balance'].iloc[0]
         position.loc['cash', 'enable_amount'] = balance['enable_balance'].iloc[0]
         position.loc['cash', 'lasttrade'] = 1.0
-        position.loc['cash', 'market_value'] = balance['current_balance'].iloc[0]
+        position.loc['cash', 'market_value'] = balance['fund_balance'].iloc[0]
 
         # 计算仓位
         position['weight'] = position['market_value'] / asset_balance
