@@ -152,13 +152,16 @@ class gfLoginSession(LoginSession):
         logger.debug('login resq: %s' % resq.json())
 
         data = resq.json()
-        if data['success']:
+        if data['success'] == True:
             v = resq.headers
             self._dse_sessionId = v['Set-Cookie'][-32:]
             # 等待服务器准备就绪
             time.sleep(0.1)
             logger.info('Login success: %s' % self._dse_sessionId)
             return
+        elif data['success'] == False and 'error_info' not in data.keys():
+            logger.warning('当前系统无法登陆')
+            raise TraderAPIError(data)
         elif data['error_info'].find('验证码') != -1:
             self.dse_sessionId = None
             logger.warning('VerifyCode Error: %s' % data)
