@@ -109,7 +109,8 @@ class xqTrader(WebTrader):
         logger.debug(json_data)
         p_info = json.decode(json_data, encoding='utf-8')
 
-        positions = p_info['view_rebalancing']['holdings']
+        # 修复雪球持仓错误
+        positions = p_info['last_success_rebalancing']['holdings']
         logger.debug(p_info)
 
         df = pd.DataFrame(positions)

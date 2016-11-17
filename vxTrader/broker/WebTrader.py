@@ -139,6 +139,22 @@ class LoginSession():
         '''
         raise NotImplementedError('Login method is not implemented.')
 
+    def logout(self):
+        '''
+        退出登录接口
+        '''
+
+        self._session = None
+        self._expire_at = 0
+
+    def reset(self):
+        '''
+        重置session
+        '''
+        self.logout()
+        time.sleep(0.5)
+        self.session
+
     def request(self, method, url, **kwargs):
         '''
         调用session的各类http方法
@@ -394,20 +410,20 @@ class WebTrader():
                 status = '已成'
 
             if status in ('已成'):
-                logger.info('Order Success. %s' % orderlist.loc[order_no])
+                logger.info('Order Success. OrderNo.%s' % order_no)
                 return order_no, 0
 
             elif status in ('已报', '部成', '正常'):
-                logger.info('Order not Complete. %s' % orderlist.loc[order_no])
+                logger.info('Order not Complete.OrderNo.%s' % order_no)
                 time.sleep(5)
 
             elif status in ('未报'):
-                logger.info('Not Allow to Send Order. %s' % orderlist.loc[order_no])
+                logger.info('Not Allow to Send Order. OrderNo.%s' % order_no)
                 self.cancel(order_no)
                 return order_no, amount
             else:
-                logger.error('Order Status Invaild. %s' % orderlist.loc[order_no])
-                raise TraderAPIError('Order Status Invaild. %s' % orderlist.loc[order_no])
+                logger.error('Order Status Invaild. OrderNo.%s' % order_no)
+                raise TraderAPIError('Order Status Invaild. OrderNo.%s' % order_no)
 
         # 等待了足够时间,仍未全部成交,则撤单
         try:

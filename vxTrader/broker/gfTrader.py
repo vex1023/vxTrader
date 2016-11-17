@@ -24,8 +24,7 @@ from vxTrader.util import code_to_symbols, retry
 FLOAT_COLUMNS = [
     'order_amount', 'order_price', 'lasttrade', 'current_amount', 'enable_amount', 'market_value',
     'enable_balance', 'current_balance', 'net_balance', 'asset_balance', 'business_price', 'business_amount',
-    'order_amount', 'order_price'
-]
+    'order_amount', 'order_price', 'fund_balance']
 
 RENAME_DICT = {
     'last_price': 'lasttrade',
@@ -153,13 +152,16 @@ class gfLoginSession(LoginSession):
         logger.debug('login resq: %s' % resq.json())
 
         data = resq.json()
-        if data['success']:
+        if data['success'] == True:
             v = resq.headers
             self._dse_sessionId = v['Set-Cookie'][-32:]
             # 等待服务器准备就绪
             time.sleep(0.1)
             logger.info('Login success: %s' % self._dse_sessionId)
             return
+        elif data['success'] == False and 'error_info' not in data.keys():
+            logger.warning('当前系统无法登陆')
+            raise TraderAPIError(data)
         elif data['error_info'].find('验证码') != -1:
             self.dse_sessionId = None
             logger.warning('VerifyCode Error: %s' % data)
@@ -177,11 +179,11 @@ class gfLoginSession(LoginSession):
             kwargs['params'] = params
 
             logger.debug('Call params: %s' % kwargs)
-            resq = self._session.request(method=method, url=url, **kwargs)
-            resq.raise_for_status()
-            logger.debug('return: %s' % resq.text)
+            r = self._session.request(method=method, url=url, **kwargs)
+            r.raise_for_status()
+            logger.debug('return: %s' % r.text)
             self._expire_at = time.time() + TIMEOUT
-        return resq
+        return r
 
     def post_login(self):
 
@@ -201,6 +203,20 @@ class gfLoginSession(LoginSession):
             logger.debug('Login Margin Success.')
 
         return
+
+    def logout(self):
+
+        url = 'https://trade.gf.com.cn/entry'
+        params = {
+            'classname': 'com.gf.etrade.control.AuthenticateControl',
+            'method': 'logout'
+        }
+        if self._session:
+            self._session.get(url, params=params)
+
+        self._session = None
+        self._expire_at = 0
+
 
 
 @TraderFactory('gf', '广发证券')
@@ -241,21 +257,17 @@ class gfTrader(WebTrader):
     def portfolio(self):
 
         # 异步提交持仓和余额
-        balance = self._worker.apply_async(self._trade_api, kwds={
-            'classname': 'com.gf.etrade.control.StockUF2Control',
-            'method': 'queryAssert'
-        })
+        balance = self._trade_api(
+            classname='com.gf.etrade.control.StockUF2Control',
+            method='queryAssert'
+        )
 
-        balance = balance.get().copy()
-
-        position = self._worker.apply_async(self._trade_api, kwds={
-            'classname': 'com.gf.etrade.control.StockUF2Control',
-            'method': 'queryCC'
-        })
+        position = self._trade_api(
+            classname='com.gf.etrade.control.StockUF2Control',
+            method='queryCC'
+        )
 
         # 处理持仓
-        position = position.get().copy()
-
         if position.shape[0] > 0:
             position = position[
                 ['symbol', 'symbol_name', 'current_amount', 'enable_amount', 'lasttrade', 'market_value']]
@@ -268,10 +280,10 @@ class gfTrader(WebTrader):
         # 处理现金
         asset_balance = balance['asset_balance'].iloc[0]
         position.loc['cash', 'symbol_name'] = balance['money_type_dict'].iloc[0]
-        position.loc['cash', 'current_amount'] = balance['current_balance'].iloc[0]
+        position.loc['cash', 'current_amount'] = balance['fund_balance'].iloc[0]
         position.loc['cash', 'enable_amount'] = balance['enable_balance'].iloc[0]
         position.loc['cash', 'lasttrade'] = 1.0
-        position.loc['cash', 'market_value'] = balance['current_balance'].iloc[0]
+        position.loc['cash', 'market_value'] = balance['fund_balance'].iloc[0]
 
         # 计算仓位
         position['weight'] = position['market_value'] / asset_balance
@@ -283,7 +295,12 @@ class gfTrader(WebTrader):
     def _trade_api(self, **kwargs):
         url = 'https://trade.gf.com.cn/entry'
         resq = self.client.post(url, params=kwargs)
+        if len(resq.text) == 0:
+            self.client.reset()
+            resq = self.client.post(url, params=kwargs)
+
         data = resq.json()
+
         if data.get('success', False) == False:
             logger.error(data)
             error_info = data.get('error_info', data)

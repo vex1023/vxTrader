@@ -1,5 +1,10 @@
 # 版本信息
 
+## v0.1.6
+
+1. 修复广发证券现金current_amount 取值错误
+2. 增加loginsession 的reset方法，用于重置一下session
+
 ## v0.1.5
 
 1. 佣金宝11月30日开始不再提供web接口。
