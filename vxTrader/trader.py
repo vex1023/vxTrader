@@ -12,7 +12,6 @@ from vxTrader.broker import *
 
 logger = logging.getLogger('vxQuant.vxTrader')
 
-
 import time
 
 # 最大单笔下单数量 10万股
@@ -55,14 +54,18 @@ class Trader():
 
             if trade_side == 'buy':
                 order_price = hq.loc[symbol, 'ask']
+
+                logger.info('buy: symbol(%s), price(%s), amount(%s)' % (symbol, order_price, order_amount))
                 order_no = self.broker.buy(symbol=symbol, price=order_price, amount=order_amount)
             else:
                 order_price = hq.loc[symbol, 'bid']
+
+                logger.info('sell: symbol(%s), price(%s), amount(%s)' % (symbol, order_price, order_amount))
                 order_no = self.broker.sell(symbol=symbol, price=order_price, amount=order_amount)
 
             left = left - order_amount
             order_nos.append(order_no)
-            time.sleep(0.1)
+            time.sleep(1.1)
 
         return order_nos
 
@@ -114,11 +117,13 @@ class Trader():
                 need_cancel['left'] = need_cancel['order_amount'] - need_cancel['business_amount']
                 for order_no in need_cancel.index:
                     try:
+                        logger.debug('Cancel order_no(%s)' % order_no)
                         self.broker.cancel(order_no)
                     except Exception as err:
                         logger.info('Order no cancel failed: %s' % err)
 
                 left = round(need_cancel['left'].sum(), 2)
+                logger.info('第%s次下单后，剩余未成交股数: %s' % (i + 1, left))
             else:
                 logger.info('Order Completed.')
                 return 0
