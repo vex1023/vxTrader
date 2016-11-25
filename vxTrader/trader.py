@@ -7,14 +7,13 @@ email :  vex1023@qq.com
 
 import configparser
 import logging
-import time
-
-from vxUtils.PrettyLogger import add_console_logger
 
 from vxTrader.broker import *
 
-logger = logging.getLogger(__name__)
-add_console_logger(logger)
+logger = logging.getLogger('vxQuant.vxTrader')
+
+
+import time
 
 # 最大单笔下单数量 10万股
 _MAX_AMOUNT = 100000
@@ -27,7 +26,7 @@ class Trader():
         brokerID = brokerID.lower()
         Broker = BrokerFactory.instance.get(brokerID, None)
 
-        if instance:
+        if Broker:
             self.broker = Broker(account, password, **kwargs)
         else:
             err_msg = 'broker ID: %s is not registered by trader factory(%s).' % (brokerID, BrokerFactory.instance)
@@ -56,10 +55,10 @@ class Trader():
 
             if trade_side == 'buy':
                 order_price = hq.loc[symbol, 'ask']
-                order_nos = self.broker.buy(symbol=symbol, price=order_price, amount=order_amount)
+                order_no = self.broker.buy(symbol=symbol, price=order_price, amount=order_amount)
             else:
                 order_price = hq.loc[symbol, 'bid']
-                order_nos = self.broker.sell(symbol=symbol, price=order_price, amount=order_amount)
+                order_no = self.broker.sell(symbol=symbol, price=order_price, amount=order_amount)
 
             left = left - order_amount
             order_nos.append(order_no)
@@ -72,7 +71,7 @@ class Trader():
         下单后，观察5s后，检查是否已经成交，若未成交，则撤单，再下单，最多重复10次.
         返回剩余未成交量
         '''
-        logger.debug('order: symbol(%s), amount(%s), volume(%s), weight(%s)' % (symbol, amount, volume, weight))
+        logger.info('order: symbol(%s), amount(%s), volume(%s), weight(%s)' % (symbol, amount, volume, weight))
         if amount != 0:
             left = amount
         elif volume != 0:

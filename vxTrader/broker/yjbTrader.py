@@ -18,7 +18,7 @@ import requests
 from PIL import Image
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
-from vxUtils.decotor import retry
+from vxUtils.decorator import retry
 
 from vxTrader import logger
 from vxTrader.TraderException import VerifyCodeError, TraderAPIError, LoginFailedError

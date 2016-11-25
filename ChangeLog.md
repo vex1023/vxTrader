@@ -1,5 +1,12 @@
 # 版本信息
 
+## v0.1.7
+
+1. 调整了broker的结构
+2. 增加Trader类
+3. 增加分单下单，order_auto_ipo接口
+4. 更新了文档
+
 ## v0.1.6
 
 1. 修复广发证券现金current_amount 取值错误

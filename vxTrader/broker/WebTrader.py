@@ -60,7 +60,7 @@ class BrokerFactory():
 
     def __call__(self, cls):
         for brokerID in self._brokerIDs:
-            TraderFactory.instance[brokerID.lower()] = cls
+            BrokerFactory.instance[brokerID.lower()] = cls
         return cls
 
 
@@ -471,6 +471,7 @@ class WebTrader():
         根据持仓目标下单：按最终持有数量
         :return: order_no, left
         '''
+        logger.warning('本接口将转换为: order_tartet(symbol, target_amount, target_volume, target_weight')
         logger.info('order target amount: symbol: %s, target_amount: %s' % (symbol, target_amount))
         if target_amount < 0:
             raise AttributeError('target_amount(%s) must be larger than 0.' % target_amount)
@@ -489,6 +490,7 @@ class WebTrader():
         根据持仓目标下单：按照最终持仓金额
         :return: order_no, left
         '''
+        logger.warning('本接口将转换为: order_tartet(symbol, target_amount, target_volume, target_weight')
         logger.info('order target volume: symbol: %s, target_volume: %s' % (symbol, target_volume))
         if target_volume < 0:
             raise AttributeError('target_volume(%s) must be larger than 0.' % target_volume)
@@ -507,6 +509,7 @@ class WebTrader():
         根据持仓目标下单：按照最终持仓比例
         :return: order_no, left
         '''
+        logger.warning('本接口将转换为: order_tartet(symbol, target_amount, target_volume, target_weight')
         logger.info('order target percent: symbol: %s, target_percent: %s' % (symbol, target_percent))
         if target_percent < 0:
             raise AttributeError('target_percent(%s) must be larger than 0.' % target_percent)

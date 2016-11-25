@@ -353,9 +353,9 @@ class xqTrader(WebTrader):
 
         # 计算交易股票的持仓目标比例
         if symbol in portfolio.index:
-            target_percent = (portfolio.loc[symbol, 'market_value'] + volume) / net_asset
+            target_percent = round((portfolio.loc[symbol, 'market_value'] + volume) / net_asset, 4)
         else:
-            target_percent = volume / net_asset
+            target_percent = round(volume / net_asset, 4)
 
         return self._trade_api(symbol=symbol, target_percent=target_percent, portfolio=portfolio)
 
@@ -381,7 +381,7 @@ class xqTrader(WebTrader):
         if target_volume < 0:
             raise TraderAPIError('Not enough %s for sell' % symbol)
 
-        target_percent = target_volume / portfolio['market_value'].sum()
+        target_percent = round(target_volume / portfolio['market_value'].sum(), 4)
         return self._trade_api(symbol=symbol, target_percent=target_percent, portfolio=portfolio)
 
     def order_target_percent(self, symbol, target_percent, wait=10):

@@ -24,10 +24,10 @@ pip3 install vxTrader
 ### 使用方法
 
 ```python
-from vxTrader import create_trader
-trader = create_trader(
-    brokerID='yjb',
-    account='你的佣金宝账号',
+from vxTrader import Trader
+trader = Trader(
+    brokerID='gf',
+    account='加密后广发账号',
     password='加密后的密码'
 )
 
@@ -40,8 +40,9 @@ print(trader.orderlist)
 ### 支持券商
 
 * 广发证券————(__'gf'__)  
+* 雪球组合管理———(__'xq'__)
+   
 * 国金证券（佣金宝)———(__'yjb'__)   11月30日以后，佣金宝不再提供web交易接口
-* 雪球组合管理———(__'xq'__)   
 
 ### 主要接口介绍
 
@@ -82,9 +83,13 @@ trader.portfolio
 返回pandas.DataFrame格式的数据
 * index 
 
+```
 symbol : 持仓股票,'cash' 标识现金持有情况
+```
+
 * columns:
 
+```
 symbol_name : 股票名称
 
 current_amount : 当前持有股数
@@ -97,7 +102,7 @@ market_value : 证券市值
 
 weight : 持仓权重（精确到小数点后4为)
 
-
+```
 
 #### orderlist ——委托订单查询（当日）
 
@@ -108,10 +113,12 @@ trader.orderlist
 
 * index 
 
+```
 order_no : 订单号
-
+```
 * columns
 
+```
 symbol : 交易证券代码
 
 symbol_name : 交易证券名称
@@ -129,6 +136,7 @@ business_amount : 已成交的数量
 order_status : 订单状态: 如'已报','未报','部成','部撤','已撤','已成'
 
 order_time : 下单时间
+```
 
 ### 基本委托下单指令
 
@@ -143,7 +151,7 @@ order_time : 下单时间
 * ___trans_in___ —— 银证转账转入证券账户
 * ___trans_out___ —— 银证转账转出证券账户
 * ___ipo_list___ —— ipo申购股票情况
-* ___ipo_limits__ —— ipo申购额度查询
+* ___ipo_limits___ —— ipo申购额度查询
 
 ### 组合委托下单指令
 
@@ -154,9 +162,27 @@ order_time : 下单时间
 下单指令返回后，这个交易指令下达的所有未成交的订单都会被 __撤销__ 。
 
 * ___order___ —— 基本组合下单交易
-* ___order_target_amount___ —— 设定目标持仓股数进行下单
-* ___order_target_volume___ —— 设定目标持仓市值进行下单
-* ___order_target_percent___ —— 设定目标持仓比例进行下单
+```
+trader.order('sh511880',amount=500)
+
+trader.order('sh511880',volume=50000)
+
+trader.order('sh511880',weight=0.2)
+
+```
+* ___order_target___ —— 按照目标持股数量、持股市值、持股比例下单
+```
+trader.order('sh511880', target_amount=500)
+
+trader.order('sh511880', target_volume=50000)
+
+trader.order('sh511880', target_weight=0.2)
+
+```
+
+* ___order_target_amount___ —— 设定目标持仓股数进行下单 (取消)
+* ___order_target_volume___ —— 设定目标持仓市值进行下单 (取消)
+* ___order_target_percent___ —— 设定目标持仓比例进行下单 (取消)
 
 
 ## 版本信息
