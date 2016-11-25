@@ -15,11 +15,12 @@ import pandas as pd
 import pytesseract
 import requests
 from PIL import Image, ImageFilter
+from vxUtils.decorator import retry
 
-from vxTrader import logger, TraderFactory
+from vxTrader import logger
 from vxTrader.TraderException import VerifyCodeError, TraderAPIError
-from vxTrader.broker.WebTrader import LoginSession, WebTrader
-from vxTrader.util import code_to_symbols, retry
+from vxTrader.broker.WebTrader import LoginSession, WebTrader, BrokerFactory
+from vxTrader.util import code_to_symbols
 
 FLOAT_COLUMNS = [
     'order_amount', 'order_price', 'lasttrade', 'current_amount', 'enable_amount', 'market_value',
@@ -128,7 +129,7 @@ class gfLoginSession(LoginSession):
         else:
             raise VerifyCodeError('verify code error: %s' % vcode)
 
-    @retry(5, VerifyCodeError)
+    @retry(10, VerifyCodeError)
     def login(self):
 
         # 无论是否登录，都重新创建一个session对象
@@ -218,8 +219,7 @@ class gfLoginSession(LoginSession):
         self._expire_at = 0
 
 
-
-@TraderFactory('gf', '广发证券')
+@BrokerFactory('gf', '广发证券')
 class gfTrader(WebTrader):
     def __init__(self, account, password, **kwargs):
         super(gfTrader, self).__init__(account=account, password=password, **kwargs)

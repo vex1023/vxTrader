@@ -10,9 +10,9 @@ import pandas as pd
 import requests
 import six
 
-from vxTrader import logger, TraderFactory
+from vxTrader import logger
 from vxTrader.TraderException import TraderAPIError
-from vxTrader.broker.WebTrader import WebTrader, LoginSession
+from vxTrader.broker.WebTrader import WebTrader, LoginSession, BrokerFactory
 
 _BASE_MULTIPE = 1000000.00
 
@@ -86,7 +86,7 @@ class xqLoginSession(LoginSession):
         return
 
 
-@TraderFactory('xq', '雪球', '雪球组合')
+@BrokerFactory('xq', '雪球', '雪球组合')
 class xqTrader(WebTrader):
     def __init__(self, account, password, portfolio_code):
 

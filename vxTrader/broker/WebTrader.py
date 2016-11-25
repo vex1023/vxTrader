@@ -43,6 +43,27 @@ _HEADERS = {
 _TIMEOUT = 600
 
 
+class BrokerFactory():
+    '''
+    创建一个修饰器，注册vxTrader
+    @TraderFactory('yjb', '佣金宝', '国金证券')
+    class yjbTrader(WebTrader):
+        pass
+
+    '''
+
+    instance = {}
+
+    def __init__(self, *brokerIDs):
+        # 使用小写作为关键字
+        self._brokerIDs = brokerIDs
+
+    def __call__(self, cls):
+        for brokerID in self._brokerIDs:
+            TraderFactory.instance[brokerID.lower()] = cls
+        return cls
+
+
 class LoginSession():
     _objects = {}
 

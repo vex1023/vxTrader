@@ -18,11 +18,12 @@ import requests
 from PIL import Image
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
+from vxUtils.decotor import retry
 
-from vxTrader import TraderFactory, logger
+from vxTrader import logger
 from vxTrader.TraderException import VerifyCodeError, TraderAPIError, LoginFailedError
-from vxTrader.broker.WebTrader import LoginSession, WebTrader
-from vxTrader.util import code_to_symbols, retry, to_time
+from vxTrader.broker.WebTrader import LoginSession, WebTrader, BrokerFactory
+from vxTrader.util import code_to_symbols, to_time
 
 TIMEOUT = 600
 
@@ -185,7 +186,7 @@ class yjbLoginSession(LoginSession):
         return r
 
 
-@TraderFactory('yjb', '佣金宝', '国金证券')
+@BrokerFactory('yjb', '佣金宝', '国金证券')
 class yjbTrader(WebTrader):
     def __init__(self, account, password, bank_password=None, fund_password=None):
 
