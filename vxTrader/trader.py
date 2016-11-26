@@ -7,12 +7,11 @@ email :  vex1023@qq.com
 
 import configparser
 import logging
+import time
 
 from vxTrader.broker import *
 
 logger = logging.getLogger('vxQuant.vxTrader')
-
-import time
 
 # 最大单笔下单数量 10万股
 _MAX_AMOUNT = 100000
@@ -37,6 +36,10 @@ class Trader():
 
     def _split_order(self, symbol, trade_side, amount):
         '''分单下单'''
+        symbol = symbol.lower()
+
+        if symbol == 'cash':
+            return 0
 
         left = amount
         # 获取下单行情
@@ -74,6 +77,12 @@ class Trader():
         下单后，观察5s后，检查是否已经成交，若未成交，则撤单，再下单，最多重复10次.
         返回剩余未成交量
         '''
+
+        symbol = symbol.lower()
+
+        if symbol == 'cash':
+            return 0
+
         logger.info('order: symbol(%s), amount(%s), volume(%s), weight(%s)' % (symbol, amount, volume, weight))
         if amount != 0:
             left = amount
@@ -135,6 +144,13 @@ class Trader():
         '''
         按照目标持股数量，持仓市值或者持仓比例下单
         '''
+        logger.info('Order target: symbol(%s), target_amount(%s), target_volume(%s), target_weight(%s)' % \
+                    (symbol, target_amount, target_volume, target_weight))
+
+        symbol = symbol.lower()
+
+        if symbol == 'cash':
+            return 0
 
         if portfolio is None:
             portfolio = self.broker.portfolio
@@ -160,12 +176,18 @@ class Trader():
         '''
         新股自动申购
         '''
+        logger.info('Order auto IPO')
         ipo_limit = self.broker.ipo_limit()
         ipo_list = self.broker.ipo_list()
         order_nos = []
+
         if ipo_list.shape[0] == 0:
             logger.info('今日没有新股')
             return order_nos
+        if ipo_limit.shape[0] == 0:
+            logger.info('新股申购额度不足')
+            return order_nos
+
         for symbol in ipo_list.index:
             max_buy = ipo_list.loc[symbol, 'max_buy_amount']
             lmt_buy = ipo_limit.loc[ipo_list.loc[symbol, 'exchange_type'], 'amount_limits']
@@ -177,6 +199,42 @@ class Trader():
                 order_nos.append(order_no)
 
         return order_nos
+
+    def order_transfer_to(self, source_symbol, target_symbol):
+        '''移仓，将source_symbol的股票卖掉，买入target_symbol'''
+
+        logger.info('Order source_symbol(%s) transfer to target_symbol(%s)' % (source_symbol, target_symbol))
+
+        source_symbol = source_symbol.lower()
+        target_symbol = target_symbol.lower()
+        portfolio = self.broker.portfolio
+
+        if source_symbol not in portfolio.index:
+            raise ValueError('source symbol not in portfolio')
+        if source_symbol == target_symbol:
+            logger.info('Order transfer to: source_symbol == target_symbol.')
+            return 0
+
+        source_left = 0
+        source_volume = portfolio.loc[source_symbol, 'enable_amount'] * 1.0
+        if source_symbol != 'cash':
+            source_left = self.order_target(source_symbol, target_amount=0)
+            sell_amount = portfolio.loc[source_symbol, 'current_amount'] - source_left
+            source_volume = portfolio.loc[source_symbol, 'lasttrade'] * sell_amount
+
+        if target_symbol != 'cash':
+            target_left = self.order_target(target_symbol, target_volume=source_volume)
+
+        if source_left != 0:
+            logger.info('Order transfer to: source_left(%s)' % source_left)
+
+        if target_left != 0:
+            logger.info('Order transfer to: target_left(%s)' % target_left)
+
+        if source_left == 0 and target_left == 0:
+            logger.info('Order transfer to Success.')
+
+        return source_left, target_left
 
 
 # 根据配置文件来创建
