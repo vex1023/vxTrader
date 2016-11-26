@@ -179,6 +179,14 @@ trader.order('sh511880', target_volume=50000)
 trader.order('sh511880', target_weight=0.2)
 
 ```
+* ___order_auto_ipo___ —— 自动IPO申购
+```
+trader.order_auto_ipo()
+```
+* ___order_transfer_to___ —— 调仓操作
+```
+trader.order_transfer_to(source_symbol='sh511880', target_symbol='sh511010')
+```
 
 * ___order_target_amount___ —— 设定目标持仓股数进行下单 (取消)
 * ___order_target_volume___ —— 设定目标持仓市值进行下单 (取消)
