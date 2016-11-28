@@ -1,10 +1,8 @@
 import os
 import unittest
 
-from vxTrader import create_trader
 
-
-class yjbTraderTestCase(unittest.TestCase):
+class gfTraderTestCase(unittest.TestCase):
     def setUp(self):
         brokerid = os.getenv('brokerid', '')
         account = os.getenv('account', '')
@@ -16,7 +14,7 @@ class yjbTraderTestCase(unittest.TestCase):
 
         self.trader = create_trader(brokerid, account, password)
 
-    def test_yjbLoginSession(self):
+    def test_gfLoginSession(self):
         print(self.trader.portfolio)
         print(self.trader.orderlist)
         print(self.trader.exchange_stock_account)
