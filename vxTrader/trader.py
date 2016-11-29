@@ -163,11 +163,12 @@ class Trader():
             source_volume = portfolio.loc[symbol, 'market_value']
             source_weight = portfolio.loc[symbol, 'weight']
 
-        if target_amount:
+        # 修复target_amount, target_volume, target_weight为0 的情况
+        if target_amount is not None:
             amount = target_amount - source_amount
-        elif target_volume:
+        elif target_volume is not None:
             volume = target_volume - source_volume
-        elif target_weight:
+        elif target_weight is not None:
             weight = target_weight - source_weight
 
         return self.order(symbol, amount, volume, weight, portfolio)
