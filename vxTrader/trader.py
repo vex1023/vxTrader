@@ -207,7 +207,7 @@ class Trader():
 
         return order_nos
 
-    def order_transfer_to(self, source_symbol, target_symbol, transfer_amount=None, transfer_volume,
+    def order_transfer_to(self, source_symbol, target_symbol, transfer_amount=None, transfer_volume=None,
                           transfer_weight=None):
         '''移仓，将source_symbol的股票卖掉，买入target_symbol'''
 
