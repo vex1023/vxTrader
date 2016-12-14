@@ -60,7 +60,9 @@ df = trader.hq(['sz150023','sz150022'])
 返回一个pandas.DataFrame格式的数据
 * index
 
+```
 symbol : 被查询的股票
+```
 
 * columns
 
@@ -172,11 +174,11 @@ trader.order('sh511880',weight=0.2)
 ```
 * ___order_target___ —— 按照目标持股数量、持股市值、持股比例下单
 ```
-trader.order('sh511880', target_amount=500)
+trader.order_target('sh511880', target_amount=500)
 
-trader.order('sh511880', target_volume=50000)
+trader.order_target('sh511880', target_volume=50000)
 
-trader.order('sh511880', target_weight=0.2)
+trader.order_target('sh511880', target_weight=0.2)
 
 ```
 * ___order_auto_ipo___ —— 自动IPO申购
