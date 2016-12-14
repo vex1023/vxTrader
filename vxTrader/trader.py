@@ -196,11 +196,18 @@ class Trader():
             if amount > 0:
                 order_no = self.broker.buy(symbol, amount=amount, price=price)
                 logger.info('新股申购: %s, 数量: %s, 价格: %s' % (symbol, amount, price))
-                order_nos.append(order_no)
+                order_nos.append({
+                    'order_no': order_no,
+                    'trade_side': '新股申购',
+                    'symbol': symbol,
+                    'amount': amount,
+                    'price': price}
+                )
 
         return order_nos
 
-    def order_transfer_to(self, source_symbol, target_symbol):
+    def order_transfer_to(self, source_symbol, target_symbol, transfer_amount=None, transfer_volume,
+                          transfer_weight=None):
         '''移仓，将source_symbol的股票卖掉，买入target_symbol'''
 
         logger.info('Order source_symbol(%s) transfer to target_symbol(%s)' % (source_symbol, target_symbol))
