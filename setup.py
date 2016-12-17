@@ -18,7 +18,8 @@ requirements = [
     'pandas',
     'pytesseract',
     'demjson',
-    'Pillow'
+    'Pillow',
+    'vxUtils'
 ]
 
 readme = None
