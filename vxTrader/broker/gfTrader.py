@@ -63,7 +63,7 @@ class gfLoginSession(LoginSession):
         self._dse_sessionId = None
 
         # 融资融券标志
-        self.margin = False
+        self.margin_flags = False
 
     def pre_login(self):
         '''
@@ -133,7 +133,7 @@ class gfLoginSession(LoginSession):
     def login(self):
 
         # 无论是否登录，都重新创建一个session对象
-        self.pre_login()
+        # self.pre_login()
 
         login_params = {
             "authtype": 2,
@@ -172,6 +172,30 @@ class gfLoginSession(LoginSession):
             logger.warning('API Login Error: %s' % data)
             raise TraderAPIError(data['error_info'])
 
+    def post_login(self):
+
+        if self.margin_flags == True:
+            margin_login_params = {
+                'classname': 'com.gf.etrade.control.RZRQUF2Control',
+                'method': 'ValidataLogin',
+                'dse_sessionId': self._dse_sessionId
+            }
+
+            r = self._session.post(
+                url='https://trade.gf.com.cn/entry',
+                params=margin_login_params)
+
+            data = r.json()
+            logger.debug('ensure_margin_flags: %s' % data)
+
+            trade_status = data.pop('success', False)
+            if trade_status == False:
+                logger.error(data)
+                error_info = data.get('error_info', data)
+                raise TraderAPIError(error_info)
+
+
+
     def request(self, method, url, **kwargs):
 
         with self:
@@ -185,25 +209,6 @@ class gfLoginSession(LoginSession):
             logger.debug('return: %s' % r.text)
             self._expire_at = time.time() + TIMEOUT
         return r
-
-    def post_login(self):
-
-        if self.margin:
-            r = self.session.post(
-                url='https://trade.gf.com.cn/entry',
-                classname='com.gf.etrade.control.RZRQUF2Control',
-                method='ValidataLogin'
-            )
-            data = r.json()
-
-            if data.get('success', False) == False:
-                logger.error(data)
-                error_info = data.get('error_info', data)
-                raise TraderAPIError(error_info)
-
-            logger.debug('Login Margin Success.')
-
-        return
 
     def logout(self):
 
@@ -300,8 +305,10 @@ class gfTrader(WebTrader):
             resq = self.client.post(url, params=kwargs)
 
         data = resq.json()
+        logger.debug('_trade_api() return: %s' % data)
 
-        if data.get('success', False) == False:
+        trade_status = data.pop('success', False)
+        if trade_status == False:
             logger.error(data)
             error_info = data.get('error_info', data)
             raise TraderAPIError(error_info)
@@ -325,9 +332,9 @@ class gfTrader(WebTrader):
         orderlist = self._trade_api(
             classname='com.gf.etrade.control.StockUF2Control',
             method='queryDRWT',
-            action_in=1,
+            action_in=0,
             query_direction=0,
-            limit=20,
+            limit=50,
             request_num=100
         )
 
@@ -552,3 +559,93 @@ class gfTrader(WebTrader):
             df.set_index('symbol', inplace=True)
 
         return df
+
+
+@BrokerFactory('gfmargin', '广发证券融资融券')
+class gfMarginTrader(WebTrader):
+    def __init__(self, account, password, **kwargs):
+        super(gfMarginTrader, self).__init__(account=account, password=password, **kwargs)
+        self.client = gfLoginSession(account=account, password=password)
+
+    def _ensure_margin_flags(self):
+        '''确保已经登录了融资融券账户'''
+        if self.client.margin_flags == False:
+            margin_login_params = {
+                'classname': 'com.gf.etrade.control.RZRQUF2Control',
+                'method': 'ValidataLogin'
+            }
+
+            r = self.client.post(
+                url='https://trade.gf.com.cn/entry',
+                params=margin_login_params)
+
+            data = r.json()
+            logger.debug('ensure_margin_flags: %s' % data)
+
+            trade_status = data.pop('success', False)
+            if trade_status == False:
+                logger.error(data)
+                error_info = data.get('error_info', data)
+                raise TraderAPIError(error_info)
+
+            stockholders = data.get('stockholders', [])
+            self._exchange_stock_account = {}
+            for holders in stockholders:
+                self._exchange_stock_account[holders['exchange_type']] = holders['stock_account']
+
+            # 将session 设置为已经登录信用账户的状态
+            self.client.margin_flags = True
+
+            return
+
+    @property
+    def exchange_stock_account(self):
+        self._ensure_margin_flags()
+        return self._exchange_stock_account
+
+    def _trade_api(self, **kwargs):
+
+        # 确保已经正确登录了融资融券账号
+        self._ensure_margin_flags()
+
+        url = 'https://trade.gf.com.cn/entry'
+        resq = self.client.post(url, params=kwargs)
+        if len(resq.text) == 0:
+            self.client.reset()
+            resq = self.client.post(url, params=kwargs)
+
+        data = resq.json()
+        logger.debug('_trade_api() return: %s' % data)
+
+        trade_status = data.pop('success', False)
+        if trade_status == False:
+            logger.error(data)
+            error_info = data.get('error_info', data)
+            raise TraderAPIError(error_info)
+
+        df = pd.DataFrame(data['data'])
+
+        df.rename(columns=RENAME_DICT, inplace=True)
+        if 'symbol' in df.columns:
+            df['symbol'] = df['symbol'].apply(code_to_symbols)
+
+        # 去字段的并集，提高效率
+        cols = list(set(FLOAT_COLUMNS).intersection(set(df.columns)))
+
+        for col in cols:
+            df[col] = pd.to_numeric(df[col], errors='ignore')
+        return df
+
+    def test(self):
+        print(self._trade_api(
+            classname='com.gf.etrade.control.RZRQUF2Control',
+            method='queryCC',
+            request_num=500,
+            start=0,
+            limit=50
+        ))
+
+        # print(self._trade_api(
+        #    classname='com.gf.etrade.control.RZRQUF2Control',
+        #    method='queryAssert'
+        # ))

@@ -384,32 +384,44 @@ class xqTrader(WebTrader):
         target_percent = round(target_volume / portfolio['market_value'].sum(), 4)
         return self._trade_api(symbol=symbol, target_percent=target_percent, portfolio=portfolio)
 
-    def order_target_percent(self, symbol, target_percent, wait=10):
-
-        return self._trade_api(symbol=symbol, target_percent=target_percent), 0
-
-    def order_target_amount(self, symbol, target_amount, wait=10):
+    def order(self, symbol, amount=0, volume=0, weight=0, portfolio=None):
 
         symbol = symbol.lower()
-        hq = self.hq(symbol)
-        price = hq.loc[symbol, 'lasttrade']
-        target_volume = price * target_amount
 
-        portfolio = self.portfolio
-        target_percent = target_volume / portfolio['market_value'].sum()
+        logger.info('order: symbol(%s), amount(%.2f), volume(%.2f), weight(%.4f)' % (symbol, amount, volume, weight))
 
-        return self._trade_api(symbol=symbol, target_percent=target_percent, portfolio=portfolio), 0
+        if amount == 0 and volume == 0 and weight == 0:
+            return 0
 
-    def order_target_volume(self, symbol, target_volume, wait=10):
+        if portfolio is None:
+            portfolio = self.portfolio
 
-        portfolio = self.portfolio
-        target_percent = target_volume / portfolio['market_value'].sum()
-
-        return self._trade_api(symbol=symbol, target_percent=target_percent, portfolio=portfolio), 0
-
-    def order(self, symbol, amount=0, volume=0, wait=10):
-
-        if amount < 0 or volume < 0:
-            return self.sell(symbol, 0, -amount, -volume), 0
+        if amount != 0:
+            if symbol in portfolio.index:
+                volume = portfolio.loc[symbol, 'lasttrade'] * amount
+                target_volume = portfolio.loc[symbol, 'market_value'] + volume
+                target_weight = target_volume / portfolio['market_value'].sum()
+            else:
+                lasttrade = self.hq(symbol).loc[symbol, 'lasttrade']
+                target_volume = amount * lasttrade
+                target_weight = target_volume / portfolio['market_value'].sum()
+        elif volume != 0:
+            if symbol in portfolio.index:
+                target_volume = portfolio.loc[symbol, 'market_value'] + volume
+                target_weight = target_volume / portfolio['market_value'].sum()
+            else:
+                target_volume = volume
+                target_weight = target_volume / portfolio['market_value'].sum()
         else:
-            return self.buy(symbol, 0, amount, volume), 0
+            if symbol in portfolio.index:
+                target_weight = portfolio.loc[symbol, 'weight'] + weight
+            else:
+                target_weight = weight
+
+        if target_weight > 1 or target_weight < 0:
+            raise AttributeError(
+                'order: symbol(%s), amount(%.2f), volume(%.2f), weight(%.4f)' % (symbol, amount, volume, weight))
+
+        self._trade_api(symbol=symbol, target_percent=round(target_weight, 4), portfolio=portfolio)
+
+        return 0

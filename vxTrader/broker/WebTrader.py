@@ -18,7 +18,6 @@ import pandas as pd
 import requests
 
 from vxTrader import logger
-from vxTrader.TraderException import TraderAPIError, TraderError
 
 _MAX_LIST = 800
 
@@ -342,14 +341,6 @@ class WebTrader():
         '''
         raise NotImplementedError('Cancel Not Implemented.')
 
-    def ipo_subscribe(self, symbol):
-        '''
-        ipo新股申购
-        :param symbol: 新股名称
-        :return: order_no
-        '''
-        raise NotImplementedError('IPO subscribe Not Implemented.')
-
     def ipo_limit(self):
         '''
         查询当前ipo 认购限额
@@ -383,147 +374,3 @@ class WebTrader():
         :return:
         '''
         raise NotImplementedError('trans_out Not Implemented.')
-
-    def order(self, symbol, amount=0, volume=0, wait=10):
-        '''
-        按数量下单
-        :return: order_no, left
-        '''
-        logger.debug('order_amount: symbol: %s, amount: %s, volume: %s, wait: %s' % (symbol, amount, volume, wait))
-
-        if (amount == 0 and volume == 0):
-            raise AttributeError('order_amount amount and volume can not be 0')
-
-        # 下单
-        try:
-            hq = self.hq(symbol)
-            logger.debug('hq: %s' % hq.loc[symbol])
-            price = hq.loc[symbol, 'lasttrade']
-            amount = amount if amount else round(volume, 2) // price // 100 * 100
-            if amount == 0:
-                return 0, 0
-
-            if amount > 0 or volume > 0:
-                price = hq.loc[symbol, 'ask']
-                order_no = self.buy(symbol, price, amount=amount)
-                logger.info('buy order send,order_no: %s' % order_no)
-            elif amount < 0 or volume < 0:
-                price = hq.loc[symbol, 'bid']
-                order_no = self.sell(symbol, price, amount=-amount)
-                logger.info('sell order send,order_no: %s' % order_no)
-
-        except TraderError as err:
-            logger.debug('Order Error: %s' % err)
-            raise err
-
-        # 每隔2秒检查一下成交状态.
-        # 如果是已成交,则返回order_no, 0
-        # 如果是已报、部成, 则再等2秒钟。
-        # 如果是其他状态,就报警
-        time.sleep(5)
-        for i in range(int((wait + 1) / 2)):
-            logger.info('Check Order Status %s times.' % i)
-            orderlist = self.orderlist
-            if order_no in orderlist.index:
-                status = orderlist.loc[order_no, 'order_status']
-            else:
-                # 如果记录的订单号不在orderlist里面，则认为已经成交了。
-                status = '已成'
-
-            if status in ('已成'):
-                logger.info('Order Success. OrderNo.%s' % order_no)
-                return order_no, 0
-
-            elif status in ('已报', '部成', '正常'):
-                logger.info('Order not Complete.OrderNo.%s' % order_no)
-                time.sleep(5)
-
-            elif status in ('未报'):
-                logger.info('Not Allow to Send Order. OrderNo.%s' % order_no)
-                self.cancel(order_no)
-                return order_no, amount
-            else:
-                logger.error('Order Status Invaild. OrderNo.%s' % order_no)
-                raise TraderAPIError('Order Status Invaild. OrderNo.%s' % order_no)
-
-        # 等待了足够时间,仍未全部成交,则撤单
-        try:
-            logger.warning('Cancel order: %s' % order_no)
-            self.cancel(order_no)
-            time.sleep(0.3)
-            orderlist = self.orderlist
-            status = orderlist.loc[order_no, 'order_status']
-            if status in ('已撤', '部撤'):
-                orderlist['left'] = orderlist['order_amount'] - orderlist['business_amount']
-                left = orderlist.loc[order_no, 'left']
-                if amount < 0:
-                    left = -left
-                return order_no, left
-            else:
-                raise TraderAPIError('Order Status Invaild. %s' % orderlist.loc[order_no])
-
-        except TraderError as err:
-            logger.warning(err)
-            logger.warning('Order Status Invaild. %s' % orderlist.loc[order_no])
-
-    def order_target_amount(self, symbol, target_amount, wait=10):
-        '''
-        根据持仓目标下单：按最终持有数量
-        :return: order_no, left
-        '''
-        logger.warning('本接口将转换为: order_tartet(symbol, target_amount, target_volume, target_weight')
-        logger.info('order target amount: symbol: %s, target_amount: %s' % (symbol, target_amount))
-        if target_amount < 0:
-            raise AttributeError('target_amount(%s) must be larger than 0.' % target_amount)
-        portfolio = self.portfolio
-        base_amount = 0
-        if symbol in portfolio.index:
-            base_amount = portfolio.loc[symbol, 'current_amount']
-        amount = target_amount - base_amount
-        if amount != 0:
-            return self.order(symbol, amount=amount, wait=wait)
-        else:
-            return 0, 0
-
-    def order_target_volume(self, symbol, target_volume, wait=10):
-        '''
-        根据持仓目标下单：按照最终持仓金额
-        :return: order_no, left
-        '''
-        logger.warning('本接口将转换为: order_tartet(symbol, target_amount, target_volume, target_weight')
-        logger.info('order target volume: symbol: %s, target_volume: %s' % (symbol, target_volume))
-        if target_volume < 0:
-            raise AttributeError('target_volume(%s) must be larger than 0.' % target_volume)
-        portfolio = self.portfolio
-        base_volume = 0
-        if symbol in portfolio.index:
-            base_volume = portfolio.loc[symbol, 'market_value']
-        volume = target_volume - base_volume
-        if volume != 0:
-            return self.order(symbol, volume=volume, wait=wait)
-        else:
-            return 0, 0
-
-    def order_target_percent(self, symbol, target_percent, wait=10):
-        '''
-        根据持仓目标下单：按照最终持仓比例
-        :return: order_no, left
-        '''
-        logger.warning('本接口将转换为: order_tartet(symbol, target_amount, target_volume, target_weight')
-        logger.info('order target percent: symbol: %s, target_percent: %s' % (symbol, target_percent))
-        if target_percent < 0:
-            raise AttributeError('target_percent(%s) must be larger than 0.' % target_percent)
-        if target_percent > 1:
-            raise AttributeError('target_percent(%s) must be smaller than 1.' % target_percent)
-
-        portfolio = self.portfolio
-        portfolio_value = portfolio['market_value'].sum()
-        target_volume = portfolio_value * target_percent
-        base_volume = 0
-        if symbol in portfolio.index:
-            base_volume = portfolio.loc[symbol, 'market_value']
-        volume = target_volume - base_volume
-        if volume != 0:
-            return self.order(symbol, volume=volume, wait=wait)
-        else:
-            return 0, 0

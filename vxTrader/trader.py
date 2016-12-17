@@ -26,6 +26,10 @@ class Trader():
 
         if Broker:
             self.broker = Broker(account, password, **kwargs)
+
+            # 如果broker 提供了order, 直接使用broker的接口
+            if hasattr(self.broker, 'order'):
+                self.__dict__['order'] = self.broker.__getattribute__('order')
         else:
             err_msg = 'broker ID: %s is not registered by trader factory(%s).' % (brokerID, BrokerFactory.instance)
             logger.error(err_msg)
@@ -83,7 +87,7 @@ class Trader():
         if symbol == 'cash':
             return 0
 
-        logger.info('order: symbol(%s), amount(%s), volume(%s), weight(%s)' % (symbol, amount, volume, weight))
+        logger.info('order: symbol(%s), amount(%.2f), volume(%.2f), weight(%.4f)' % (symbol, amount, volume, weight))
         if amount != 0:
             left = amount
         elif volume != 0:
@@ -110,12 +114,12 @@ class Trader():
         trade_side = 'buy'
         if left < 0:
             trade_side = 'sell'
-            left = abs(left)
+            left = -left
 
         for i in range(10):
             order_nos = self._split_order(symbol, trade_side, left)
             # 等待一段时间
-            time.sleep(3 + 2 * i)
+            time.sleep(min((2 + 3 * i), 10))
 
             # 检查成交情况
             orderlist = self.broker.orderlist
@@ -207,31 +211,42 @@ class Trader():
 
         return order_nos
 
-    def order_transfer_to(self, source_symbol, target_symbol, transfer_amount=None, transfer_volume=None,
-                          transfer_weight=None):
+    def order_transfer_to(self, source_symbol, target_symbol,
+                          transfer_amount=0, transfer_volume=0, transfer_weight=0):
         '''移仓，将source_symbol的股票卖掉，买入target_symbol'''
-
-        logger.info('Order source_symbol(%s) transfer to target_symbol(%s)' % (source_symbol, target_symbol))
 
         source_symbol = source_symbol.lower()
         target_symbol = target_symbol.lower()
+
+        if min(transfer_amount, transfer_volume, transfer_weight) < 0:
+            raise ValueError('transfer_amount, transfer_volume, transfer_weight must be bigger than 0')
+
+        if source_symbol == target_symbol:
+            logger.info('Order transfer to: source_symbol == target_symbol.')
+            return 0, 0
+
         portfolio = self.broker.portfolio
 
         if source_symbol not in portfolio.index:
             raise ValueError('source symbol not in portfolio')
-        if source_symbol == target_symbol:
-            logger.info('Order transfer to: source_symbol == target_symbol.')
-            return 0
+
+        # 如果不指定转换数量，则默认全部转移
+        if transfer_amount == 0 and transfer_volume == 0 and transfer_weight == 0:
+            transfer_amount = portfolio.loc[source_symbol, 'enable_amount']
+
+        logger.info('Order source_symbol(%s) (%s,%s,%s) transfer to target_symbol(%s)' % (
+        source_symbol, transfer_amount, transfer_volume, transfer_weight, target_symbol))
 
         source_left = 0
-        source_volume = portfolio.loc[source_symbol, 'enable_amount'] * 1.0
+        source_volume = portfolio.loc[source_symbol, 'market_value']
         if source_symbol != 'cash':
-            source_left = self.order_target(source_symbol, target_amount=0)
-            sell_amount = portfolio.loc[source_symbol, 'current_amount'] - source_left
-            source_volume = portfolio.loc[source_symbol, 'lasttrade'] * sell_amount
+            source_left = self.order(source_symbol, amount=-transfer_amount, volume=-transfer_volume,
+                                     weight=-transfer_weight, portfolio=portfolio)
+            portfolio = self.broker.portfolio
+            target_volume = source_volume - portfolio.loc[source_symbol, 'market_value']
 
         if target_symbol != 'cash':
-            target_left = self.order_target(target_symbol, target_volume=source_volume)
+            target_left = self.order_target(target_symbol, target_volume=target_volume, portfolio=portfolio)
 
         if source_left != 0:
             logger.info('Order transfer to: source_left(%s)' % source_left)

@@ -187,12 +187,8 @@ trader.order_auto_ipo()
 ```
 * ___order_transfer_to___ —— 调仓操作
 ```
-trader.order_transfer_to(source_symbol='sh511880', target_symbol='sh511010')
+trader.order_transfer_to(source_symbol='sh511880', target_symbol='sh511010', transfer_amount=100)
 ```
-
-* ___order_target_amount___ —— 设定目标持仓股数进行下单 (取消)
-* ___order_target_volume___ —— 设定目标持仓市值进行下单 (取消)
-* ___order_target_percent___ —— 设定目标持仓比例进行下单 (取消)
 
 
 ## 版本信息

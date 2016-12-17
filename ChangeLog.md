@@ -1,5 +1,12 @@
 # 版本信息
 
+## v0.1.9
+
+1. 停用了order_target_amount, order_target_volume, order_target_weight接口，用order_target替代
+2. 修订了雪球组合下单的问题
+3. 修订了order_auto_ipo 的返回值，返回{ order_no, symbol, trade_side, amount, price}
+4. 调整了order_transfer_to的入口参数，增加transfer_amount, transfer_volume, transfer_weight参数
+
 ## v0.1.8
 
 1. 增加order_transfer_to接口用户调仓下单；

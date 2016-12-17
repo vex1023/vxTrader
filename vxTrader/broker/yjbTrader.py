@@ -77,7 +77,8 @@ class yjbLoginSession(LoginSession):
         self.code_rule = re.compile("^[0-9]{4}$")
 
         if datetime.now() > datetime(year=2016, month=11, day=30, hour=0):
-            raise TraderAPIError('佣金宝交易接口已于2016年11月30日关闭')
+            # raise TraderAPIError('佣金宝交易接口已于2016年11月30日关闭')
+            logger.warning('佣金宝交易接口已于2016年11月30日关闭')
         else:
             logger.warning('佣金宝交易接口将于2016年11月30日关闭')
 
