@@ -190,6 +190,12 @@ trader.order_auto_ipo()
 trader.order_transfer_to(source_symbol='sh511880', target_symbol='sh511010', transfer_amount=100)
 ```
 
+* ___order_cashout___ -- 套现交易
+```python
+trader.order_cashout(['sh511880','sh511010'], 30000)
+```
+
+
 
 ## 版本信息
 
