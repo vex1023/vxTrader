@@ -329,6 +329,7 @@ class xqTrader(WebTrader):
         try:
             r = self.client.post(url='https://xueqiu.com/cubes/rebalancing/create.json', params=params)
             r.raise_for_status()
+            time.sleep(0.3)
         except Exception as err:
             logger.warning('order failed: %s' % err)
             raise TraderAPIError(str(err))
@@ -401,17 +402,21 @@ class xqTrader(WebTrader):
                 volume = portfolio.loc[symbol, 'lasttrade'] * amount
                 target_volume = portfolio.loc[symbol, 'market_value'] + volume
                 target_weight = target_volume / portfolio['market_value'].sum()
+                weight = target_weight - portfolio.loc[symbol, 'weight']
             else:
                 lasttrade = self.hq(symbol).loc[symbol, 'lasttrade']
                 target_volume = amount * lasttrade
                 target_weight = target_volume / portfolio['market_value'].sum()
+                weight = target_weight
         elif volume != 0:
             if symbol in portfolio.index:
                 target_volume = portfolio.loc[symbol, 'market_value'] + volume
                 target_weight = target_volume / portfolio['market_value'].sum()
+                weight = target_weight - portfolio.loc[symbol, 'weight']
             else:
                 target_volume = volume
                 target_weight = target_volume / portfolio['market_value'].sum()
+                weight = target_weight
         else:
             if symbol in portfolio.index:
                 target_weight = portfolio.loc[symbol, 'weight'] + weight
@@ -422,6 +427,10 @@ class xqTrader(WebTrader):
             raise AttributeError(
                 'order: symbol(%s), amount(%.2f), volume(%.2f), weight(%.4f)' % (symbol, amount, volume, weight))
 
-        self._trade_api(symbol=symbol, target_percent=round(target_weight, 4), portfolio=portfolio)
-
+        if weight > 0.001 or weight < -0.001:
+            logger.debug('target_weight: %s' % round(target_weight, 4))
+            self._trade_api(symbol=symbol, target_percent=round(target_weight, 4), portfolio=portfolio)
+        else:
+            logger.info('权重变化过小，无需下单: %s' % weight)
         return 0
+
