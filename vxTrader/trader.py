@@ -235,7 +235,7 @@ class Trader():
             transfer_amount = portfolio.loc[source_symbol, 'enable_amount']
 
         logger.info('Order source_symbol(%s) (%s,%s,%s) transfer to target_symbol(%s)' % (
-        source_symbol, transfer_amount, transfer_volume, transfer_weight, target_symbol))
+            source_symbol, transfer_amount, transfer_volume, transfer_weight, target_symbol))
 
         source_left = 0
         source_volume = portfolio.loc[source_symbol, 'market_value']
@@ -258,6 +258,36 @@ class Trader():
             logger.info('Order transfer to Success.')
 
         return source_left, target_left
+
+    def order_cashout(self, symbols=[], cash_value=0, portfolio=None):
+
+        logger.info('Order CashOut: from symbols %s, cash_value: %s' % (symbols, cash_value))
+
+        if not portfolio:
+            portfolio = self.portfolio
+
+        left = cash_value - portfolio.loc['cash', 'enable_amount'] * 1.0
+        symbols_value = portfolio.loc[portfolio.index.isin(symbols), 'market_value'].sum()
+        if symbols_value < left:
+            logger.warning('not enought symbols_value symbols_value: %s, cashout: %s' % (symbols_value, left))
+            return
+
+        for symbol in symbols:
+            if left <= 0:
+                return 0
+            else:
+                if symbol in portfolio.index:
+                    market_value = portfolio.loc[symbol, 'market_value']
+                    if market_value > left:
+                        # TODO 假设肯定成交完成
+                        self.order(symbol, volume=-left)
+                        left = 0
+                    else:
+                        # TODO 假设肯定成交完成
+                        self.order_target(symbol, target_amount=0)
+                        left = left - market_value
+
+        return left
 
 
 # 根据配置文件来创建
