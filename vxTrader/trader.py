@@ -100,7 +100,8 @@ class Trader():
 
             if portfolio is None:
                 portfolio = self.broker.portfolio
-            left_volume = round(portfolio['market_value'].sum(), 2)
+            # fix bug
+            left_volume = round(portfolio['market_value'].sum(), 2) * weight
             if symbol in portfolio.index:
                 price = portfolio.loc[symbol, 'lasttrade']
             else:
