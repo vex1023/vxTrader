@@ -1,5 +1,9 @@
 # 版本信息
 
+## v0.1.10
+
+1. 修复bug#3
+
 ## v0.1.9
 
 1. 停用了order_target_amount, order_target_volume, order_target_weight接口，用order_target替代
