@@ -196,7 +196,14 @@ class Trader():
 
         for symbol in ipo_list.index:
             max_buy = ipo_list.loc[symbol, 'max_buy_amount']
-            lmt_buy = ipo_limit.loc[ipo_list.loc[symbol, 'exchange_type'], 'amount_limits']
+            
+            # fix bug #4 自动申购差错
+            exchange_type = ipo_list.loc[symbol, 'exchange_type']
+            if exchange_type in ipo_limit.index:
+                lmt_buy = ipo_limit.loc[ipo_list.loc[symbol, 'exchange_type'], 'amount_limits']
+            else:
+                lmt_buy = 0
+                
             amount = min(float(max_buy), float(lmt_buy))
             price = ipo_list.loc[symbol, 'ipo_price']
             if amount > 0:
